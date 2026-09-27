@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ryu.dev — Computer Engineering Portfolio</title>
+<meta name="description" content="Portfolio of Ryu — Grade 12 student, software and hardware projects."/>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<!-- Tailwind (CDN) -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "canvas-base": "#0B0F14",
+          "surface-card": "#111822",
+          "surface-dim": "#101419",
+          "border-subtle": "#1E293B",
+          "border-accent": "rgba(0, 240, 255, 0.4)",
+          "primary-container": "#00f0ff",
+          "electric-blue": "#0066ff",
+          "secondary": "#89ceff",
+          "text-primary": "#F1F5F9",
+          "text-secondary": "#94A3B8",
+          "text-muted": "#64748B"
+        },
+        borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
+        spacing: {
+          "gutter": "1.5rem", "gutter-mobile": "1rem",
+          "space-lg": "2rem", "space-2xl": "6rem"
+        },
+        fontFamily: {
+          "hero-name": ["JetBrains Mono"], "hero-name-mobile": ["JetBrains Mono"],
+          "headline-lg": ["JetBrains Mono"], "headline-md": ["JetBrains Mono"],
+          "label-mono": ["JetBrains Mono"], "code-snippet": ["JetBrains Mono"],
+          "body-lg": ["Inter", "Noto Sans Thai"], "body-md": ["Inter", "Noto Sans Thai"],
+          "caption": ["Inter", "Noto Sans Thai"]
+        },
+        fontSize: {
+          "hero-name": ["72px", { lineHeight: "76px", letterSpacing: "-0.04em", fontWeight: "800" }],
+          "hero-name-mobile": ["44px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "800" }],
+          "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+          "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+          "body-lg": ["18px", { lineHeight: "30px", fontWeight: "400" }],
+          "body-md": ["15px", { lineHeight: "24px", fontWeight: "400" }],
+          "label-mono": ["13px", { lineHeight: "18px", letterSpacing: "0.02em", fontWeight: "500" }],
+          "code-snippet": ["14px", { lineHeight: "22px", fontWeight: "500" }],
+          "caption": ["12px", { lineHeight: "16px", fontWeight: "400" }]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  /* ── neon border: animated conic-gradient spin ── */
+  @property --nb-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  @keyframes neon-spin { to { --nb-angle: 360deg; } }
+  @keyframes blink { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
+
+  .cyan-glow:hover { box-shadow: 0 0 20px -3px rgba(0, 240, 255, 0.2); }
+  .custom-cursor { display:inline-block; width:8px; height:15px; background:#00F0FF; vertical-align:middle; animation: blink 1s step-start infinite; }
+  section, article { scroll-margin-top: 4.5rem; }
+
+  /* neon-border card — wraps the real card border with a pseudo spinning gradient */
+  .neon-card { position:relative; }
+  .neon-card::before {
+    content:""; position:absolute; inset:-1px; border-radius:inherit; z-index:0; opacity:0;
+    background: conic-gradient(from var(--nb-angle), #00f0ff 0%, #0066ff 40%, #00f0ff 60%, #0066ff 100%);
+    animation: neon-spin 2.4s linear infinite;
+    transition: opacity .3s ease;
+  }
+  .neon-card > * { position:relative; z-index:1; }
+  .neon-card::after {
+    content:""; position:absolute; inset:0px; border-radius:inherit; z-index:0;
+    background: #111822; /* surface-card */
+  }
+  .neon-card:hover::before { opacity:1; }
+  /* inner content must sit above the ::after fill */
+  .neon-card > * { position:relative; z-index:2; }
+
+  /* progress bar: cyan→blue gradient */
+  #progress {
+    background: linear-gradient(90deg, #00f0ff 0%, #0066ff 60%, #00f0ff 100%);
+    background-size: 200% 100%;
+    animation: prog-shift 3s linear infinite;
+  }
+  @keyframes prog-shift { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
+
+  /* hero: full-width fiber background */
+  #hero-wrap { position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden; background:#05060c; padding-top:3.5rem; }
+  #hero-wrap canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #hero-wrap .fade { position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(90deg, rgba(11,15,20,.88) 0%, rgba(11,15,20,.45) 45%, transparent 72%),
+               linear-gradient(0deg, #0B0F14 0%, transparent 22%); }
+  #hero-wrap .inner { position:relative; width:100%; }
+  /* hero photo: stands at the bottom right, fades out at the bottom and at its cut-off left edge */
+  #hero-wrap .hero-photo { position:absolute; bottom:0; right:max(2vw, calc((100vw - 1120px) / 2)); height:min(86vh, 860px); width:auto;
+    pointer-events:none; filter:drop-shadow(0 0 28px rgba(0,184,239,.22));
+    -webkit-mask-image:linear-gradient(to top, transparent 0%, #000 22%), linear-gradient(to right, transparent 0%, #000 14%);
+    -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(to top, transparent 0%, #000 22%), linear-gradient(to right, transparent 0%, #000 14%);
+    mask-composite:intersect;
+    animation:heroPhotoIn 1.1s cubic-bezier(.2,.7,.2,1) .35s both; }
+  @keyframes heroPhotoIn { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:none; } }
+  @media (max-width: 767px) {
+    /* phones: name sits in the top half, photo stands in the bottom half so they don't overlap */
+    #hero-wrap { align-items:flex-start; }
+    #hero-wrap .hero-photo { right:-6%; height:50vh; }
+    #hero.py-space-2xl { padding-top:3rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { #hero-wrap .hero-photo { animation:none; } }
+  @media (max-width: 767px) {
+    #hero-wrap .fade { background:linear-gradient(0deg, #0B0F14 0%, rgba(11,15,20,.6) 30%, rgba(11,15,20,.6) 75%, rgba(11,15,20,.2) 100%); }
+  }
+
+  /* hero intro: lines slide up once on load */
+  .intro > * { opacity:0; transform:translateY(18px); animation:introUp .8s cubic-bezier(.2,.7,.2,1) forwards; }
+  .intro > *:nth-child(2){animation-delay:.12s} .intro > *:nth-child(3){animation-delay:.24s}
+  .intro > *:nth-child(4){animation-delay:.36s} .intro > *:nth-child(5){animation-delay:.48s}
+  @keyframes introUp { to { opacity:1; transform:none; } }
+
+  /* scroll tracking: progress bar + active nav link */
+  #progress { position:fixed; top:56px; left:0; right:0; height:2px; z-index:60; pointer-events:none;
+    transform-origin:0 50%; transform:scaleX(0); box-shadow:0 0 12px rgba(0,102,255,.5), 0 0 8px rgba(0,240,255,.6); }
+  .nav-link { position:relative; }
+  .nav-link::after { content:""; position:absolute; left:0; right:0; bottom:-6px; height:1px; background:#00f0ff;
+    transform:scaleX(0); transform-origin:0 50%; transition:transform .3s ease; }
+  .nav-link.active { color:#00f0ff; text-shadow: 0 0 10px rgba(0,102,255,.6); }
+  .nav-link.active::after { transform:scaleX(1); background: linear-gradient(90deg, #00f0ff, #0066ff); }
+  #mobile-nav .nav-link::after { display:none; }
+  #mobile-nav .nav-link.active::before { content:"> "; }
+
+  /* frames (desktop): stacked full-screen frames, scroll drives the transition between them */
+  #hs { position:relative; flex:none; }
+  #hs-sticky { position:sticky; top:0; height:100vh; overflow:hidden; background:#0B0F14; }
+  .hs-panel { position:absolute; inset:0; display:flex; align-items:center; padding-top:56px; overflow:hidden;
+    background:#0B0F14; transform-origin:50% 50%; will-change:transform,clip-path,opacity; }
+  .hs-panel.hs-hero { padding-top:0; }
+  /* no sideways scroll: full-bleed backgrounds use 100vw (includes the scrollbar), and edge glows / tilted
+     pictures poke a little past the screen edge on phones */
+  html, body { overflow-x:clip; }
+  .hs-inner { position:relative; z-index:1; width:100%; max-width:1120px; margin:0 auto; padding:0 1.5rem; will-change:transform,opacity; }
+  .hs-panel > .panel-bg { position:absolute; inset:0; z-index:0; }
+  .hs-hero .hs-inner { max-width:none; padding:0; height:100%; }
+  .hs-hero #hero-wrap { min-height:0; height:100%; }
+  .hs-dim { position:absolute; inset:0; z-index:2; background:#05070a; opacity:0; pointer-events:none; }
+  .hs-panel section { padding-top:0 !important; padding-bottom:0 !important; border-top:0 !important; margin-bottom:0 !important; }
+  .hs-ring { position:absolute; left:50%; top:55%; transform:translate(-50%,-50%); border-radius:50%; display:none; pointer-events:none;
+    border:1px solid rgba(0,200,255,.8); box-shadow:0 0 28px rgba(0,102,255,.5), 0 0 14px rgba(0,240,255,.4), inset 0 0 20px rgba(0,102,255,.2); }
+  /* "drop" transition: falling water drop (teardrop = square with one sharp corner, turned 45deg) */
+  .hs-drop { position:absolute; left:50%; top:0; width:22px; height:22px; margin-left:-11px; display:none; pointer-events:none;
+    border-radius:0 50% 50% 50%; background:radial-gradient(circle at 65% 65%, #e0fdff 0%, #00f0ff 35%, #0066ff 100%);
+    box-shadow:0 0 18px rgba(0,240,255,.7), 0 0 40px rgba(0,102,255,.5); }
+  /* "split" transition: glowing edges of the opening */
+  .hs-line { position:absolute; left:0; right:0; height:2px; margin-top:-1px; display:none; pointer-events:none;
+    background:linear-gradient(90deg, transparent, #00f0ff 20%, #0066ff 50%, #00f0ff 80%, transparent);
+    box-shadow:0 0 16px rgba(0,240,255,.6), 0 0 32px rgba(0,102,255,.4); }
+  .hs-snap { position:absolute; left:0; width:1px; height:1px; scroll-snap-align:start; pointer-events:none; }
+  html.hs-on.hs-snapping { scroll-snap-type:y proximity; }
+
+  /* hero: Thai name + tagline */
+  .hero-thai { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:600; font-size:clamp(22px,2.6vw,32px); line-height:1.4; color:#F1F5F9; }
+  .hero-tag { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:700; font-size:clamp(18px,2vw,24px); line-height:1.5; }
+
+  /* story frames */
+  .story { text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  html:not(.hs-on) .story { min-height:88vh; padding:4rem 0; }
+  .st-wrap { width:100%; display:flex; flex-direction:column; align-items:center; }
+  .st-title { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:800; font-size:clamp(40px,8vw,112px); line-height:1.3; letter-spacing:-0.01em; color:#F1F5F9; }
+  .st-title.muted { color:#475569; }
+  .st-text { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:500; font-size:clamp(22px,3vw,38px); line-height:1.6; color:#CBD5E1; max-width:980px; }
+  .st-text.muted { color:#64748B; }
+  .st-eyebrow { font-family:"Noto Sans Thai","JetBrains Mono",sans-serif; font-weight:600; font-size:clamp(15px,1.4vw,18px); color:#00f0ff; margin-bottom:.75rem; }
+  .st-sub { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:600; font-size:clamp(18px,2.2vw,26px); line-height:1.5; color:#CBD5E1; margin-top:.5rem; }
+  .st-card { max-width:760px; margin-top:2rem; padding:1.5rem 1.75rem; border-radius:.5rem; border:1px solid #1E293B; background:#111822; }
+  .st-card p { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:clamp(16px,1.6vw,19px); line-height:1.75; color:#CBD5E1; }
+  /* points + tags + comment share one left edge; the block itself is centred under the title */
+  .st-body { width:fit-content; max-width:760px; margin:0 auto; text-align:left; }
+  .st-split .st-body { margin:0; }
+  /* project facts: bullet list with glowing dots */
+  .st-points { list-style:none; margin:1.5rem 0 0; padding:0; display:flex; flex-direction:column; gap:.55rem; text-align:left; }
+  .st-points li { position:relative; padding-left:1.5rem; font-family:"Noto Sans Thai","Inter",sans-serif;
+    font-size:clamp(16px,1.6vw,19px); line-height:1.7; color:#CBD5E1; }
+  .st-points li::before { content:""; position:absolute; left:.25rem; top:calc(.85em - 4px); width:8px; height:8px; border-radius:50%;
+    background:linear-gradient(135deg,#00f0ff,#0066ff); box-shadow:0 0 10px rgba(0,240,255,.7), 0 0 4px rgba(0,102,255,.9); }
+  /* project links: QR on a white tile (scanners need light background) + label, whole card clickable */
+  .st-links { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.25rem; }
+  .st-link { display:flex; align-items:center; gap:.75rem; padding:.5rem .9rem .5rem .5rem; border-radius:.5rem;
+    border:1px solid #1E293B; background:#111822; transition:border-color .2s, box-shadow .2s; }
+  .st-link:hover { border-color:rgba(0,240,255,.6); box-shadow:0 0 18px rgba(0,102,255,.25); }
+  .st-link img { width:58px; height:58px; padding:4px; background:#fff; border-radius:.3rem; image-rendering:pixelated; }
+  /* hovering a card blows the QR up so a phone can scan it off the screen */
+  .st-link img { position:relative; z-index:5; transform-origin:0 100%; transition:transform .25s ease, box-shadow .25s ease; }
+  .st-link:hover img { transform:scale(2.6); box-shadow:0 12px 40px rgba(0,0,0,.6); }
+  .st-link b { display:block; font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:600; font-size:15px; color:#F1F5F9; }
+  .st-link small { display:block; font-family:"JetBrains Mono",monospace; font-size:11px; color:#00f0ff; opacity:.8; margin-top:.15rem; }
+  /* picture viewer (lightbox) */
+  .st-pic img { cursor:zoom-in; }
+  .st-pic { pointer-events:none; }                 /* hidden pictures must not catch clicks meant for the text over them */
+  .st-play .st-pic { pointer-events:auto; }
+  .lb { position:fixed; inset:0; z-index:100; background:rgba(5,7,10,0); transition:background .35s ease, backdrop-filter .35s ease; }
+  .lb[hidden] { display:none; }
+  .lb.open { background:rgba(5,7,10,.88); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .lb-img { position:fixed; left:0; top:0; transform-origin:0 0; border-radius:.5rem; cursor:zoom-out; background:#111822;
+    box-shadow:0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(0,240,255,.35), 0 0 40px rgba(0,102,255,.25);
+    transition:transform .4s cubic-bezier(.2,.8,.2,1); }
+  .lb-btn { position:fixed; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    color:#F1F5F9; background:rgba(17,24,34,.85); border:1px solid rgba(0,240,255,.3); opacity:0; transition:opacity .3s ease, color .2s, border-color .2s, box-shadow .2s; }
+  .lb.open .lb-btn { opacity:1; }
+  .lb-btn:hover { color:#00f0ff; border-color:#00f0ff; box-shadow:0 0 16px rgba(0,240,255,.4); }
+  .lb-close { top:18px; right:18px; }
+  .lb-prev { left:18px; top:50%; margin-top:-23px; }
+  .lb-next { right:18px; top:50%; margin-top:-23px; }
+  .lb.single .lb-prev, .lb.single .lb-next { display:none; }
+  .lb-count { position:fixed; left:0; right:0; bottom:18px; text-align:center; font-family:"JetBrains Mono",monospace; font-size:13px; color:#94A3B8; }
+
+  /* DepthText: layers stacked in 3D behind the face */
+  .dt { display:inline-block; filter:drop-shadow(0 18px 22px rgba(0,0,0,.55)); }
+  .dt-stack { position:relative; display:inline-block; transform-style:preserve-3d; will-change:transform; }
+  .dt-layer { position:absolute; left:0; top:0; white-space:nowrap; }
+  .dt-face { position:relative; display:inline-block; white-space:nowrap; transform:translateZ(0); text-shadow:0 0 22px rgba(0,240,255,.28); }
+
+  /* BorderGlow: --edge (0..1) = how close the pointer is to an edge, --ang = where along the border */
+  .bglow { isolation:isolate; }
+  .bglow::before { content:""; position:absolute; inset:0; border-radius:inherit; padding:1.5px; pointer-events:none; z-index:3;
+    background:conic-gradient(from calc(var(--ang, 0deg) - var(--spread, 25deg)),
+      transparent 0deg, var(--gc1) calc(var(--spread, 25deg) * .5), var(--gc2) var(--spread, 25deg),
+      var(--gc3) calc(var(--spread, 25deg) * 1.5), transparent calc(var(--spread, 25deg) * 2));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude;
+    opacity:var(--edge, 0); transition:opacity .2s ease; }
+  .bglow::after { content:""; position:absolute; inset:calc(var(--glow-r, 40px) * -1); border-radius:inherit; pointer-events:none; z-index:-1;
+    background:radial-gradient(var(--glow-r, 40px) circle at calc(var(--gx, 0px) + var(--glow-r, 40px)) calc(var(--gy, 0px) + var(--glow-r, 40px)),
+      rgb(var(--glow-rgb, 0 200 255) / .4), transparent 70%);
+    opacity:var(--edge, 0); transition:opacity .2s ease; }
+
+  /* contact: animated grid behind, photo left, open list of contact rows right (no boxes) */
+  .ct-section { position:relative; padding:5rem 0; }
+  /* moving grid behind every frame except the first (see GRID + gridBackgrounds()) */
+  section > .panel-bg { position:absolute; top:0; bottom:0; left:calc(50% - 50vw); right:calc(50% - 50vw); z-index:0; overflow:hidden; }
+  .grid-bg { pointer-events:none;
+    background-image:linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size:var(--grid-size) var(--grid-size); }
+  .grid-bg::after { content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 50%, transparent 0%, var(--grid-fade) 70.7%); }
+  .grid-hover { position:absolute; left:0; top:0; width:var(--grid-size); height:var(--grid-size); background:var(--grid-hover); display:none; }
+  .story { position:relative; }
+  .story > .st-wrap { position:relative; z-index:1; }
+  .ct-layout { position:relative; z-index:1; display:grid; grid-template-columns:1fr; gap:2rem; align-items:center; }
+  @media (min-width: 900px) { .ct-layout { grid-template-columns:.85fr 1.15fr; gap:3.5rem; } }
+  .ct-photo img { display:block; height:min(64vh, 560px); width:auto; max-width:100%; object-fit:contain; margin:0 auto;
+    filter:drop-shadow(0 0 28px rgba(0,184,239,.18));
+    -webkit-mask-image:linear-gradient(to top, transparent 0%, #000 20%), linear-gradient(to left, transparent 0%, #000 14%);
+    -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(to top, transparent 0%, #000 20%), linear-gradient(to left, transparent 0%, #000 14%);
+    mask-composite:intersect; }
+  @media (max-width: 899px) { .ct-photo img { height:42vh; } }
+  .ct-eyebrow { font-family:"JetBrains Mono",monospace; font-size:13px; color:#00f0ff; }
+  .ct-title { font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-weight:800; font-size:clamp(40px,5.2vw,72px); line-height:1.25;
+    color:#F1F5F9; margin:.5rem 0 .9rem; }
+  .ct-body { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:17px; line-height:1.7; color:#94A3B8; max-width:520px; }
+  .ct-list { margin-top:2.25rem; border-top:1px solid rgba(148,163,184,.14); }
+  .ct-row { position:relative; display:flex; align-items:center; gap:1.1rem; padding:1rem .25rem;
+    border-bottom:1px solid rgba(148,163,184,.14); transition:padding .25s ease; }
+  .ct-row::after { content:""; position:absolute; left:0; bottom:-1px; height:1px; width:0; transition:width .35s ease;
+    background:linear-gradient(90deg,#00f0ff,#0066ff); box-shadow:0 0 10px rgba(0,240,255,.6); }
+  .ct-row:hover { padding-left:.75rem; }
+  .ct-row:hover::after { width:100%; }
+  .ct-icon { flex:none; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    color:#00f0ff; border:1px solid rgba(0,240,255,.35); background:rgba(0,240,255,.06); transition:all .25s ease; }
+  .ct-row:hover .ct-icon { color:#0B0F14; border-color:transparent; background:linear-gradient(135deg,#00f0ff,#0066ff); box-shadow:0 0 16px rgba(0,240,255,.45); }
+  .ct-label { display:block; font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#64748B; }
+  .ct-value { display:block; font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-size:17px; color:#F1F5F9; overflow-wrap:anywhere; margin-top:.1rem; }
+  .ct-arrow { margin-left:auto; font-family:"JetBrains Mono",monospace; color:#64748B; transition:transform .25s ease, color .25s ease; }
+  .ct-row:hover .ct-value, .ct-row:hover .ct-arrow { color:#00f0ff; }
+  .ct-row:hover .ct-arrow { transform:translateX(4px); }
+  /* your own comment on the project: set apart from the facts */
+  .st-note { margin-top:1.75rem; padding:.1rem 0 .1rem 1rem; position:relative; }
+  .st-note::before { content:""; position:absolute; left:0; top:0; bottom:0; width:2px; border-radius:2px;
+    background:linear-gradient(180deg,#00f0ff,#0066ff); box-shadow:0 0 8px rgba(0,240,255,.5); }
+  .st-note-label { display:block; font-family:"JetBrains Mono",monospace; font-size:12px; color:#00f0ff; opacity:.75; margin-bottom:.3rem; }
+  .st-note p { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:clamp(15px,1.4vw,17px); line-height:1.75; color:#94A3B8; }
+  .st-icon { width:64px; height:64px; margin:0 auto 1rem; border-radius:.75rem; overflow:hidden; border:1px solid #1E293B; background:#111822; }
+  .st-icon > div { padding:4px !important; font-size:9px; line-height:1.2; word-break:break-all; }
+  .st-split { width:100%; max-width:1080px; display:grid; grid-template-columns:1fr; gap:2rem; align-items:center; text-align:left; }
+  .st-split .st-icon { margin-left:0; }
+  /* two-column project frames hold the most content: tighter title and spacing so they fit 720p screens */
+  .st-split .st-title { font-size:clamp(36px,4.6vw,76px); }
+  .st-split .st-points { margin-top:1.1rem; }
+  .st-split .st-body > .flex { margin-top:1rem; }
+  .st-split .st-links { margin-top:1rem; }
+  .st-split .st-note { margin-top:1.1rem; }
+  .st-split .st-card { margin-top:1.5rem; }
+  @media (min-width: 900px) { .st-split { grid-template-columns:1.1fr 1fr; gap:3rem; } }
+
+  /* project gallery: tilted pictures. The frame opens on the description (text sits centred), then the
+     text slides left and the pictures drop in one by one. .st-play is set when the frame comes to rest. */
+  .st-gallery { position:relative; width:100%; aspect-ratio:1/1; max-height:calc(100vh - 140px); }
+  .st-pic { position:absolute; width:70%; aspect-ratio:16/10; margin:0; padding:6px; border-radius:.5rem; background:#111822;
+    border:1px solid rgba(0,240,255,.35); box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 22px rgba(0,102,255,.18);
+    opacity:0; transform:translate(40px,70px) rotate(calc(var(--r) + 14deg)) scale(.82); }
+  .st-pic > * { border-radius:.3rem; }
+  .st-pic:has(img) { aspect-ratio:auto; }   /* real pictures keep their own shape; placeholders stay 16:10 */
+  .st-play .st-pic { opacity:1; transform:rotate(var(--r));
+    transition:opacity .45s ease, transform .8s cubic-bezier(.2,.9,.3,1.15); transition-delay:calc(.75s + var(--i) * .38s); }
+  .st-play .st-pic:hover { transform:rotate(0deg) scale(1.04); z-index:10 !important; transition-delay:0s; }
+  @media (min-width: 900px) {
+    /* text column starts centred on the frame: shift = half of (picture column + gap) */
+    .st-split > .st-text-col { transform:translateX(calc(45.45% + 24px)); }
+    .st-play .st-split > .st-text-col { transform:none; transition:transform .75s cubic-bezier(.2,.7,.2,1) .1s; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .st-pic, .st-play .st-pic { opacity:1; transform:rotate(var(--r)); transition:none; }
+    .st-split > .st-text-col { transform:none !important; }
+  }
+  .st-hl { background:linear-gradient(90deg,#00f0ff,#0066ff); -webkit-background-clip:text; background-clip:text; color:transparent;
+    padding:.12em 0; -webkit-box-decoration-break:clone; box-decoration-break:clone; filter:drop-shadow(0 0 18px rgba(0,102,255,.35)); }
+
+  /* scroll reveal */
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .intro > *, .reveal { opacity:1 !important; transform:none !important; animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+
+<body class="bg-canvas-base text-text-primary selection:bg-primary-container selection:text-canvas-base antialiased min-h-screen flex flex-col font-body-md text-body-md">
+
+<!-- HEADER (filled by script) -->
+<header class="fixed top-0 left-0 right-0 w-full z-50 h-14 bg-canvas-base/85 backdrop-blur-md border-b border-border-subtle">
+  <div class="flex justify-between items-center max-w-[1120px] mx-auto px-gutter-mobile md:px-gutter h-full">
+    <a id="brand" class="flex items-center gap-1 font-label-mono text-label-mono font-bold text-text-primary tracking-tight" href="#hero"></a>
+    <nav id="nav" class="hidden md:flex items-center gap-6"></nav>
+    <div class="flex items-center gap-3">
+      <span id="header-actions" class="flex items-center gap-3"></span>
+      <button id="menu-btn" class="md:hidden p-1 text-text-secondary hover:text-primary-container" aria-label="Menu" aria-expanded="false">
+        <span class="material-symbols-outlined text-[24px]">menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+<div id="progress" aria-hidden="true"></div>
+<div id="mobile-nav" class="hidden md:hidden fixed top-14 left-0 right-0 z-40 bg-canvas-base/95 backdrop-blur-md border-b border-border-subtle px-gutter-mobile py-3 flex-col gap-1"></div>
+
+<div id="hero-wrap">
+  <canvas id="fibers" aria-hidden="true"></canvas>
+  <div class="fade"></div>
+  <div class="inner max-w-[1120px] mx-auto px-gutter-mobile md:px-gutter" id="hero-slot"></div>
+</div>
+
+<main id="app" class="flex-grow max-w-[1120px] w-full mx-auto px-gutter-mobile md:px-gutter"></main>
+
+<footer id="footer" class="w-full py-space-lg border-t border-border-subtle bg-canvas-base"></footer>
+
+<script>
+/* =====================================================================
+   EDIT ONLY THIS BLOCK.  Everything on the page is rendered from SITE.
+   - Anything starting with "TODO:" is a placeholder. Replace it before sending.
+   - Empty string ""  -> that link/image is hidden or shows a placeholder.
+   - Empty list []    -> that section (achievements) is hidden entirely.
+   - Only write things that are true and that you can explain if asked.
+   ===================================================================== */
+const SITE = {
+  htmlTitle: "Ryu.dev — Computer Engineering Portfolio",
+  brand: "Ryu.dev",
+  name: "RYU",
+  fullName: "นิธิศ ทองขาว",
+  tagline: "ผู้ล้มแล้วลุก",
+  heroPhoto: "images/me.png",   // your photo on the right of the first screen (transparent PNG); "" = none
+
+  /* Story frames right after the hero, one full screen each, in order.
+     kind: "title"   -> huge line in the middle of the screen (muted: true = grey)
+           "text"    -> a sentence or two, medium size (muted: true = grey)
+           "project" -> eyebrow + title + subtitle + points + tags + comment
+                        points:  facts about the project, shown as a bullet list
+                        comment: your own thoughts about it, shown as a separate "// comment" note
+                        gallery: 1-3 real pictures, shown tilted on the right and dropped in one by one
+                                 after the description (a missing file shows a placeholder)
+                        links: [{ label, url, qr }] -> clickable cards, with a QR image if qr is given
+                        (optional icon: small square above the title)
+     highlight: part of the text shown in cyan→blue gradient.  "\n" = new line. */
+  story: [
+    { kind: "title", text: 'ทำไมถึง "ล้มแล้วลุก"', highlight: "ล้มแล้วลุก" },
+    { kind: "text",  text: "ผมสมัครเข้าค่ายอบรมไปถึง 5 ค่าย\nแต่ทุกค่ายนั้นปฏิเสธ", highlight: "5 ค่าย" },
+    { kind: "title", text: "ผมหมดไฟ...", muted: true },
+    { kind: "title", text: "แล้วลุกยังไงล่ะ?", highlight: "ลุก" },
+    { kind: "text",  text: "เพราะใครสักคนดึงผมออกมาจากกองขี้เถ้านั้น\nผลักดันให้ผมทำอะไรสักอย่าง ดีกว่าที่จะอยู่นิ่ง ๆ", highlight: "ใครสักคน" },
+    {
+      kind: "project",
+      eyebrow: "เริ่มจากโปรเจกต์",
+      title: "LetMeLearn", highlight: "LetMeLearn",
+      subtitle: "เว็บไซต์ช่วยติวเนื้อหาด้วยเทคโนโลยีปัญญาประดิษฐ์",
+      gallery: ["images/letmelearn-1.png", "images/letmelearn-2.png"],
+      links: [   // QR + clickable link (QR images are generated from these same URLs)
+        { label: "คลิปนำเสนอ", url: "https://youtu.be/vP_DSwVy5hg", qr: "images/letmelearn-qr-video.png" },
+        { label: "ลองใช้งานเว็บไซต์", url: "https://letmelearn-9mpc.onrender.com/", qr: "images/letmelearn-qr-site.png" }
+      ],
+      points: ["ทำหน้าที่เป็น Fullstack Dev", "จัดการ Backend, API และ Google Services"],
+      tags: ["Fullstack", "Backend", "API", "Google Services", "AI"],
+      comment: "โปรเจกต์นี้เป็นครั้งแรกที่ผมได้ทำหน้าที่เป็น Fullstack Dev และได้จัดการ Backend, API และ Google Services เป็นครั้งแรก"
+    },
+    { kind: "text",  text: "เมื่อฉ่ำเรื่อง API\nผมเลยได้มีโอกาสสร้างแชทบอท ในโปรเจกต์...", highlight: "แชทบอท" },
+    {
+      kind: "project",
+      title: "Budget-Bot", highlight: "Budget-Bot",
+      icon: "images/budget-bot-icon.png",   // real icon; placeholder shows until the file exists
+      gallery: ["images/budget-bot-1.png", "images/budget-bot-2.png"],   // chat answer, n8n workflow
+      subtitle: "แชทบอทที่ทำหน้าที่ตอบคำถามเรื่องงบประมาณในหน่วยงานของพ่อผม",
+      points: ["ทำงานบนแพลตฟอร์ม n8n", "นำฐานข้อมูลมาจาก Google Sheet", "ใช้ API จาก Groq"],
+      tags: ["n8n", "Google Sheet", "Groq API", "Chatbot"]
+    },
+    { kind: "text",  text: "ผมทำโปรเจกต์ไปเรื่อย ๆ อย่างไร้จุดหมาย", muted: true },
+    { kind: "title", text: "จนกระทั่ง..." },
+    { kind: "text",  text: "Dek70 ss2 โดย HamsterHub\nที่มอบแรงบันดาลใจให้ผมในการเดินหน้าสร้างผลงานต่อ", highlight: "Dek70 ss2" },
+    {
+      kind: "project",
+      title: "SendThemCool", highlight: "SendThemCool",
+      subtitle: "เกมเล็ก ๆ ที่สร้างใน GameJamX โดย HamsterHub ภายในเวลา 3 วัน",
+      gallery: ["images/sendthemcool-1.png"],   // in-game screenshot
+      points: [
+        "เล่าถึงพนักงานส่งของในอวกาศที่จะต้องทำภารกิจส่งลูกอมให้พระเจ้า",
+        "ทำงานเป็นทีม พัฒนาด้วย Unity",
+        "ใช้ AI ออกแบบและสร้างระบบ"
+      ],
+      tags: ["Unity", "Game Jam", "Teamwork", "AI"],
+      comment: "โปรเจกต์นี้มีเวลาเพียงแค่สามวัน ซึ่งเป็นเวลาที่น้อยมาก ผมจึงต้องเร่งทำงานให้เสร็จ ซึ่งทำให้ผมฝึกทักษะการทำงานภายใต้แรงกดดันจากเวลา นอกจากนี้ผมยังต้องประสานงานกับคนในทีม และเรียนรู้การใช้เครื่องมืออย่าง Unity"
+    },
+    {
+      kind: "project",
+      title: "Against All Odds", highlight: "Against All Odds",
+      subtitle: "เกมแนว Horror Psychological Thriller โดยใช้ Unity Engine",
+      gallery: ["images/against-all-odds-1.webp", "images/against-all-odds-2.webp", "images/against-all-odds-3.webp"],   // title screen, night-shift intro, enemy
+      links: [
+        { label: "ลองเล่นเกม", url: "https://righttherepenguins.itch.io/againtallodds", qr: "images/against-all-odds-qr-itch.png" },
+        { label: "ดูคลิปวิดีโอ", url: "https://www.youtube.com/watch?v=uphhuOzzSbs&t=7s", qr: "images/against-all-odds-qr-video.png" }
+      ],
+      points: [
+        "เล่าถึงยามในห้างที่หลุดเข้าไปในมิติประหลาด",
+        "มิตินั้นมีทั้งศัตรูและผู้รอดชีวิตอยู่ในนั้น",
+        "ผู้เล่นต้องเอาชีวิตรอดตามเวลาที่กำหนด"
+      ],
+      tags: ["Unity", "Horror", "Psychological Thriller"],
+      comment: "นี่เป็นโปรเจกต์ที่ใหญ่ที่สุดเท่าที่ผมเคยทำมา ผมได้เรียนรู้จากโปรเจกต์นี้หลาย ๆ อย่างมาก"
+    }
+  ],
+
+  /* Numbered sections after the story. false = hidden (the content further down is kept, set true to bring it back). */
+  sections: { about: false, skills: false, projects: false, achievements: false, contact: true },
+
+  links: {
+    github:   "https://github.com/LazyDay2024",
+    email:    "Nithis.ryu@gmail.com",
+    phone:    "099-520-8185",
+    linkedin: "",   // optional, leave "" to hide
+    resume:   ""    // optional PDF/link, leave "" to hide the Resume button
+  },
+
+  about: {
+    photo: "images/me.jpg",   // your real photo; if the file is missing a placeholder shows
+    photoAlt: "Portrait of Ryu",
+    paragraphs: [
+      "I'm a Grade 12 student in the Science-Math track with an IT focus on software and hardware, and I'm aiming for Computer Engineering.",
+      "TODO: 2-3 sentences in your own words — what got you into building things, what you enjoy most, what you want to learn at university."
+    ],
+    focusLine: "Focus: Software & Hardware",
+    configFile: "ryu.config.yaml",
+    config: [            // [key, value, highlight?]
+      ["grade:", "12", true],
+      ["track:", "Science-Math"],
+      ["focus:", "Software & Hardware"],
+      ["goal:", "Computer Engineering", true]
+    ]
+  },
+
+  skills: [
+    {
+      title: "Software", icon: "code",
+      blurb: "Programming languages and application-level development.",
+      items: ["Python", "C#", "HTML/CSS"],
+      evidence: [
+        { label: "Python", target: "drowsiness-detector", targetLabel: "Drowsiness Detector" },
+        { label: "C#", target: "ambatta-blow", targetLabel: "Ambatta Blow" }
+      ]
+    },
+    {
+      title: "Hardware", icon: "memory",
+      blurb: "Embedded boards and simple circuit work.",
+      items: ["Raspberry Pi", "Sensors & Actuators", "Basic Circuits"],
+      evidence: [
+        { label: "Raspberry Pi", target: "drowsiness-detector", targetLabel: "Drowsiness Detector" }
+      ]
+    },
+    {
+      title: "Tools", icon: "build",
+      blurb: "Tools used day to day.",
+      items: ["Git", "GitHub", "Unity", "VS Code"],
+      evidence: [
+        { label: "Unity", target: "ambatta-blow", targetLabel: "Ambatta Blow" }
+      ]
+    }
+  ],
+
+  projects: [
+    {
+      id: "ambatta-blow",
+      title: "Ambatta Blow",
+      badge: "Game // Unity",
+      image: "images/ambatta-blow.png",          // real screenshot or GIF
+      imageAlt: "Screenshot of Ambatta Blow",
+      description: "A first-person horror game built in Unity. TODO: what did YOU build (player controller, enemy AI, levels, sound)? What was the hardest problem and how did you solve it?",
+      tags: ["Unity", "C#"],
+      links: [
+        { label: "Demo / Trailer", url: "" },
+        { label: "GitHub Source",  url: "" }
+      ]
+    },
+    {
+      id: "drowsiness-detector",
+      title: "Drowsiness Detector",
+      badge: "Embedded // Raspberry Pi",
+      image: "images/drowsiness-detector.jpg",  // real photo of YOUR build
+      imageAlt: "Drowsiness detector running on a Raspberry Pi",
+      description: "A drowsiness detector that runs on a Raspberry Pi and plays an audio alert through a speaker on the 3.5mm jack when drowsiness is detected. TODO: how does it detect drowsiness, which libraries, how accurate, and why a speaker instead of a buzzer / how you handled the Pi's power limit.",
+      tags: ["Python", "Raspberry Pi"],
+      links: [
+        { label: "Demo Video",    url: "" },
+        { label: "GitHub Source", url: "" }
+      ]
+    }
+  ],
+
+  /* Real results only. Delete the placeholder if you have none —
+     with an empty list [] the whole section disappears. */
+  achievements: [
+    {
+      year: "TODO: year",
+      title: "TODO: competition or event name",
+      result: "TODO: your actual result / role",
+      description: "TODO: what you built or did there, in one or two sentences."
+    }
+  ],
+
+  contact: {
+    headline: "Get in touch", highlight: "touch",
+    body: "Happy to answer questions about my projects or walk through the code.",
+    photo: "images/contact.png",   // transparent PNG shown on the left; "" = none
+    photoAlt: "Ryu"
+  }
+};
+/* Hero background (moving glow lines). Same setting names as the React GhostFibers props.
+   Colors: purple-blue now. For the cyan theme try glowColor "#00a6b8", lineColor "#062a30".
+   enabled: false -> plain dark hero. */
+const FIBERS = {
+  enabled: true,
+  lineColor: "#041a2a", glowColor: "#00b8ef",
+  speed: 2, scale: 2, rotation: 0, rotationSpeed: 0.25,
+  layers: 3, waveAmplitude: 0.015, waveFrequency: 3, waveSpeed: 0.15, layerSpeed: 0.08,
+  twist: 0.1, twistFrequency: 5, twistSpeed: 1.2,
+  lineFrequency: 5, lineSpacing: 2, lineSharpness: 16,
+  glowFalloff: 10, glowIntensity: 1.6, brightness: 2, blueBoost: 1.0,
+  vignette: 0.8, grain: 0.05, dpr: 1, lightMode: false, fps: 60, paused: false
+};
+/* Moving grid behind every frame except the first. Same setting names as the React "ShapeGrid" props.
+   direction: up, down, left, right, diagonal.  fadeTo: colour the edges fade into (page background).
+   enabled: false -> plain dark background. */
+const GRID = {
+  enabled: true, speed: 0.5, squareSize: 40, direction: "diagonal",
+  borderColor: "#0d2531", hoverFillColor: "#0b2d3a", fadeTo: "#0B0F14"   // dark cyan lines, cyan-tinted hover
+};
+/* Hero name in 3D (port of React "DepthText"): stacked copies of the text make the depth, the stack tilts
+   toward the pointer and slowly orbits when the pointer is idle. depth = em per layer (scales with the font). */
+const DEPTH_TEXT = {
+  enabled: true, layers: 26, depth: 0.03,
+  faceColor: "#F1F5F9", depthColor: "#00c8ff", depthColorEnd: "#0b1f4d",   // depth fades cyan -> deep blue
+  tilt: 7.5, pointerTracking: true, smoothing: 0.14, perspective: 900,
+  autoOrbit: true, orbitSpeed: 0.35, shadow: true
+};
+/* Edge glow on cards (port of React "BorderGlow"): a coloured arc lights the border nearest the pointer.
+   targets: which elements get it. edgeSensitivity: how close (px) the pointer must be to an edge. */
+const BORDER_GLOW = {
+  enabled: true, targets: ".st-link, .st-pic",
+  edgeSensitivity: 30, glowRadius: 40, glowIntensity: 1, coneSpread: 25,
+  glowRgb: "0 200 255", colors: ["#00f0ff", "#38bdf8", "#0066ff"]
+};
+/* Frames: on wide screens each section becomes a full-screen frame and scrolling plays a
+   transition between frames. Phones, short screens and reduced-motion get normal scrolling.
+   transitions: one per gap between frames, in order (repeats if the list is shorter):
+     "expand" - next frame appears as a small window and grows to full screen
+     "slide"  - next frame slides in from the right
+     "cover"  - next frame rises from the bottom like a card on a stack
+     "iris"   - next frame opens as a growing circle
+     "zoom"   - zoom in: current frame flies toward you and fades, next frame settles in
+     "zoomout"- zoom out: current frame shrinks into the distance, next frame drops in from the front
+     "fade"   - current frame fades out to dark, then the next one fades in
+     "drop"   - a water drop falls to the middle and the next frame spreads out from it like a ripple
+     "cube"   - the page turns like a cube to the next face
+     "split"  - next frame opens from a glowing line in the middle, like a screen switching on
+     "glitch" - digital glitch: torn bands, colour split, then the next frame snaps in
+   scrollPerFrame: scrolling (in screen heights) per frame. hold: part of each gap where the
+   frame stays still before/after the transition (0 to 0.4, ignored in stepMode).
+   stepMode: true  -> one flick of the wheel / arrow key / swipe = go to the next frame and
+                      play the whole transition by itself (never stops half way).
+             false -> the transition follows the scroll position exactly.
+   stepDuration: how long one frame change takes (ms). stepThreshold: how much wheel movement
+   counts as "go next" (lower = more sensitive). */
+const FRAMES = {
+  enabled: true, minWidth: 1024, minHeight: 600,
+  transitions: ["zoom", "slide", "fade", "drop", "iris", "expand", "glitch", "expand", "fade", "zoomout", "iris", "expand",
+                "glitch", "cover"],
+  scrollPerFrame: 1.3, hold: 0.15, snap: true,
+  stepMode: true, stepDuration: 900, stepThreshold: 20
+};
+/* ===================== end of editable block ===================== */
+
+
+/* ---------- renderer (no need to edit below) ---------- */
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const has = (v) => Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== "";
+const ext = (url) => /^https?:/i.test(url) ? ' target="_blank" rel="noopener noreferrer"' : "";
+const icon = (name, size = 18) => `<span class="material-symbols-outlined text-[${size}px]" aria-hidden="true">${esc(name)}</span>`;
+
+// full-frame moving grid layer that sits behind a section's content (frames move it to cover the whole screen)
+const GRID_BG = GRID.enabled ? `<div class="panel-bg grid-bg" aria-hidden="true"><div class="grid-hover"></div></div>` : "";
+
+function imgSlot(src, alt, cls, hint, eager) {
+  const ph = `<div class="w-full h-full flex items-center justify-center p-4 text-center border border-dashed border-border-subtle bg-surface-dim text-text-muted font-label-mono text-caption">add ${esc(hint || "image")}</div>`;
+  if (!has(src)) return ph;
+  return `<img src="${esc(src)}" alt="${esc(alt)}" class="${cls}"${eager ? "" : ' loading="lazy"'} data-ph="${esc(ph.replace("add " + esc(hint || "image"), "add " + esc(src)))}" onerror="this.outerHTML=this.dataset.ph">`;
+}
+
+const sectionHead = (n, label) => `
+  <div class="flex items-center gap-3 mb-10">
+    <h2 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">${String(n).padStart(2, "0")}. // ${esc(label)}</h2>
+    <div class="h-px flex-1 bg-border-subtle"></div>
+  </div>`;
+
+const L = SITE.links;
+const navLink = "text-text-secondary font-label-mono text-label-mono transition-colors duration-200 hover:text-primary-container";
+const chip = "px-3 py-1.5 rounded-DEFAULT bg-border-subtle/40 border border-border-subtle text-text-primary font-label-mono text-label-mono";
+
+function heroHTML() {
+  return `
+  <section class="intro py-space-2xl flex flex-col justify-center items-start" id="hero">
+    <h1 class="font-hero-name-mobile text-hero-name-mobile md:font-hero-name md:text-hero-name text-text-primary uppercase mb-4 md:mb-5 tracking-tighter">${esc(SITE.name)}</h1>
+    ${has(SITE.fullName) ? `<p class="hero-thai">${esc(SITE.fullName)}</p>` : ""}
+    <p class="hero-tag"><span class="st-hl">${esc(SITE.tagline)}</span></p>
+    ${has(L.github) ? `<div class="flex flex-wrap items-center gap-4 mt-8">
+      <a class="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-DEFAULT border border-border-subtle hover:border-primary-container hover:text-primary-container hover:bg-primary-container/5 text-text-primary font-label-mono text-label-mono transition-all duration-150 active:scale-95" href="${esc(L.github)}"${ext(L.github)}><span>GitHub</span><span class="text-xs">↗</span></a>
+    </div>` : ""}
+  </section>`;
+}
+
+// escape, turn "\n" into <br>, wrap the highlight part in the gradient span
+function rich(text, hl) {
+  let out = esc(text);
+  if (has(hl)) out = out.split(esc(hl)).join(`<span class="st-hl">${esc(hl)}</span>`);
+  return out.replace(/\n/g, "<br>");
+}
+
+// where each tilted picture sits in the gallery (left/top in %, tilt in degrees), by picture count
+const GALLERY_SPOTS = {
+  1: [{ x: 6, y: 28, r: -3, w: 88 }],   // a lone picture gets more room
+  2: [{ x: 0, y: 12, r: -5 }, { x: 30, y: 44, r: 4 }],
+  3: [{ x: 0, y: 2, r: -6 }, { x: 30, y: 28, r: 5 }, { x: 8, y: 55, r: -2 }]
+};
+function galleryHTML(pics, title) {
+  const spots = GALLERY_SPOTS[Math.min(3, pics.length)];
+  return `<div class="st-gallery">${pics.map((src, i) => {
+    const t = spots[i % spots.length];
+    return `<figure class="st-pic" style="left:${t.x}%;top:${t.y}%;${t.w ? `width:${t.w}%;` : ""}--r:${t.r}deg;--i:${i};z-index:${i + 1}">${imgSlot(src, `${title} ${i + 1}`, "block w-full h-auto", "image", true)}</figure>`;   // eager: no pop-in mid-animation
+  }).join("")}</div>`;
+}
+
+function storyHTML() {
+  return (SITE.story || []).map((s, i) => {
+    let body;
+    if (s.kind === "title") {
+      body = `<h2 class="st-title${s.muted ? " muted" : ""}">${rich(s.text, s.highlight)}</h2>`;
+    } else if (s.kind === "project") {
+      const pics = has(s.gallery) ? s.gallery : null;
+      const split = !!pics;   // with pictures: text on the left, tilted gallery on the right
+      const text = `
+        ${"icon" in s ? `<div class="st-icon">${imgSlot(s.icon, s.title + " icon", "w-full h-full object-cover", "icon", true)}</div>` : ""}
+        ${has(s.eyebrow) ? `<div class="st-eyebrow">${esc(s.eyebrow)}</div>` : ""}
+        <h2 class="st-title">${rich(s.title, s.highlight)}</h2>
+        ${has(s.subtitle) ? `<p class="st-sub">${rich(s.subtitle)}</p>` : ""}
+        ${has(s.text) ? `<div class="st-card neon-card"><p>${rich(s.text)}</p></div>` : ""}
+        <div class="st-body">
+          ${has(s.points) ? `<ul class="st-points">${s.points.map((p) => `<li>${rich(p)}</li>`).join("")}</ul>` : ""}
+          ${has(s.tags) ? `<div class="flex flex-wrap gap-2 mt-6">${s.tags.map((t) => `<span class="${chip}">${esc(t)}</span>`).join("")}</div>` : ""}
+          ${has(s.links) ? `<div class="st-links">${s.links.filter((l) => has(l.url)).map((l) => `
+            <a class="st-link" href="${esc(l.url)}"${ext(l.url)}>
+              ${has(l.qr) ? `<img src="${esc(l.qr)}" alt="QR: ${esc(l.label)}" onerror="this.remove()">` : ""}
+              <span><b>${esc(l.label)}</b><small>${esc(new URL(l.url).hostname)} ↗</small></span>
+            </a>`).join("")}</div>` : ""}
+          ${has(s.comment) ? `<div class="st-note"><span class="st-note-label">// comment</span><p>${rich(s.comment)}</p></div>` : ""}
+        </div>`;
+      body = split
+        ? `<div class="st-split"><div class="st-text-col">${text}</div>${galleryHTML(pics, s.title)}</div>`
+        : text;
+    } else {
+      body = `<p class="st-text${s.muted ? " muted" : ""}">${rich(s.text, s.highlight)}</p>`;
+    }
+    return `<section class="story" id="story-${i + 1}">${GRID_BG}<div class="st-wrap">${body}</div></section>`;
+  }).join("");
+}
+
+function aboutHTML(n) {
+  const a = SITE.about;
+  const rows = a.config.map(([k, v, hl]) => {
+    const shown = /^\d+$/.test(v) ? v : `"${v}"`;
+    return `<div class="flex"><span class="text-text-muted w-24 shrink-0">${esc(k)}</span><span class="${hl ? "text-primary-container font-semibold" : "text-text-primary"}">${esc(shown)}</span></div>`;
+  }).join("");
+  const paras = a.paragraphs.map((p, i) => `<p class="font-body-md text-body-md ${i === 0 ? "text-text-primary" : "text-text-secondary"} leading-relaxed">${esc(p)}</p>`).join("");
+  return `
+  <section class="py-space-2xl border-t border-border-subtle/60" id="about">
+    ${sectionHead(n, "ABOUT")}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-7 flex flex-col sm:flex-row gap-6 items-start">
+        <div class="flex-shrink-0 mx-auto sm:mx-0">
+          <div class="w-[180px] h-[180px] rounded-lg border border-border-accent overflow-hidden bg-surface-card p-1">
+            ${imgSlot(a.photo, a.photoAlt, "w-full h-full object-cover rounded-DEFAULT grayscale hover:grayscale-0 transition-all duration-300", "your photo")}
+          </div>
+        </div>
+        <div class="space-y-4">
+          ${paras}
+          ${has(a.focusLine) ? `<div class="pt-2 flex items-center gap-2 font-label-mono text-label-mono text-primary-container"><span class="inline-block w-2 h-2 rounded-full bg-primary-container animate-pulse"></span><span>${esc(a.focusLine)}</span></div>` : ""}
+        </div>
+      </div>
+      <div class="lg:col-span-5 w-full">
+        <div class="bg-surface-card border border-border-subtle rounded-lg overflow-hidden font-code-snippet text-code-snippet">
+          <div class="px-4 py-2.5 bg-surface-dim border-b border-border-subtle flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-text-muted/40 inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-text-muted/40 inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-text-muted/40 inline-block"></span>
+              <span class="ml-2 font-label-mono text-label-mono text-text-muted">${esc(a.configFile)}</span>
+            </div>
+          </div>
+          <div class="p-5 space-y-2.5 text-text-secondary">${rows}</div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function skillsHTML(n) {
+  const cards = SITE.skills.map((s) => `
+    <div class="neon-card bg-surface-card border border-border-subtle rounded-lg p-space-lg flex flex-col justify-between transition-all duration-200">
+      <div>
+        <div class="flex items-center gap-2 mb-4"><span class="text-primary-container">${icon(s.icon, 20)}</span><h3 class="font-headline-md text-headline-md text-text-primary">${esc(s.title)}</h3></div>
+        <p class="font-caption text-caption text-text-muted mb-6">${esc(s.blurb)}</p>
+        <div class="flex flex-wrap gap-2.5">${s.items.map((i) => `<div class="${chip}">${esc(i)}</div>`).join("")}</div>
+      </div>
+      ${has(s.evidence) ? `<div class="mt-8 pt-4 border-t border-border-subtle/50 flex flex-col gap-2">${s.evidence.map((e) => `
+        <a class="group inline-flex items-center gap-1 font-label-mono text-label-mono text-text-secondary hover:text-primary-container transition-colors" href="#${esc(e.target)}">
+          <span>${esc(e.label)}</span><span class="text-primary-container group-hover:translate-x-1 transition-transform">→ ${esc(e.targetLabel)}</span>
+        </a>`).join("")}</div>` : ""}
+    </div>`).join("");
+  return `
+  <section class="py-space-2xl border-t border-border-subtle/60" id="skills">
+    ${sectionHead(n, "SKILLS")}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${cards}</div>
+  </section>`;
+}
+
+function projectsHTML(n) {
+  const cards = SITE.projects.map((p) => {
+    const links = p.links.filter((l) => has(l.url)).map((l, i) => `
+      <a class="inline-flex items-center gap-1 ${i === 0 ? "text-text-primary" : "text-text-secondary"} hover:text-primary-container transition-colors" href="${esc(l.url)}"${ext(l.url)}><span>${esc(l.label)}</span><span class="text-xs">↗</span></a>`).join("");
+    return `
+    <article class="neon-card bg-surface-card border border-border-subtle rounded-lg overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-200 group" id="${esc(p.id)}">
+      <div class="relative w-full aspect-video bg-surface-dim border-b border-border-subtle overflow-hidden">
+        ${imgSlot(p.image, p.imageAlt, "w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300", "project image")}
+        <div class="absolute top-3 left-3 px-2.5 py-1 rounded-DEFAULT bg-canvas-base/85 backdrop-blur-md border border-border-subtle font-label-mono text-caption text-primary-container flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span>${esc(p.badge)}</span>
+        </div>
+      </div>
+      <div class="p-space-lg flex-1 flex flex-col justify-between">
+        <div>
+          <h3 class="font-headline-md text-headline-md text-text-primary mb-2 group-hover:text-primary-container transition-colors">${esc(p.title)}</h3>
+          <p class="font-body-md text-body-md text-text-secondary mb-6 leading-relaxed">${esc(p.description)}</p>
+          <div class="flex flex-wrap gap-2 mb-6">${p.tags.map((t) => `<span class="px-2.5 py-1 rounded-DEFAULT bg-surface-dim border border-border-subtle font-label-mono text-caption text-text-primary">${esc(t)}</span>`).join("")}</div>
+        </div>
+        ${links ? `<div class="flex items-center gap-5 pt-4 border-t border-border-subtle font-label-mono text-label-mono">${links}</div>` : ""}
+      </div>
+    </article>`;
+  }).join("");
+  return `
+  <section class="py-space-2xl border-t border-border-subtle/60" id="projects">
+    ${sectionHead(n, "FEATURED PROJECTS")}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">${cards}</div>
+  </section>`;
+}
+
+function achievementsHTML(n) {
+  const items = SITE.achievements.map((a) => `
+    <div class="relative group">
+      <div class="absolute -left-[31px] md:-left-[39px] top-1.5 w-3 h-3 rounded-full bg-canvas-base border-2 border-primary-container group-hover:scale-125 transition-transform duration-150"></div>
+      <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 mb-1">
+        <span class="font-label-mono text-label-mono text-primary-container font-semibold">${esc(a.year)}</span>
+        <h3 class="font-headline-md text-headline-md text-text-primary">${esc(a.title)}</h3>
+      </div>
+      ${has(a.result) ? `<div class="font-label-mono text-caption text-secondary mb-2">${esc(a.result)}</div>` : ""}
+      ${has(a.description) ? `<p class="font-body-md text-body-md text-text-secondary max-w-2xl leading-relaxed">${esc(a.description)}</p>` : ""}
+    </div>`).join("");
+  return `
+  <section class="py-space-2xl border-t border-border-subtle/60" id="achievements">
+    ${sectionHead(n, "ACHIEVEMENTS")}
+    <div class="relative pl-6 md:pl-8 ml-2 border-l border-border-subtle space-y-12">${items}</div>
+  </section>`;
+}
+
+// GitHub mark (Material Symbols has no brand logos)
+const githubIcon = (size = 22) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>`;
+
+function contactHTML(n) {
+  const c = SITE.contact;
+  // one card per way to reach you: round glowing icon + label + the actual address/number
+  const items = [
+    has(L.email) && { href: `mailto:${L.email}`, ic: icon("mail", 22), label: "Email", value: L.email },
+    has(L.phone) && { href: `tel:+66${L.phone.replace(/\D/g, "").replace(/^0/, "")}`, ic: icon("call", 22), label: "Phone", value: L.phone },
+    has(L.github) && { href: L.github, ic: githubIcon(), label: "GitHub", value: L.github.replace(/^https?:\/\/(www\.)?github\.com\//, "").replace(/\/$/, "") },
+    has(L.linkedin) && { href: L.linkedin, ic: icon("work", 22), label: "LinkedIn", value: "LinkedIn" }
+  ].filter(Boolean);
+  const rows = items.map((it) => `
+    <a class="ct-row" href="${esc(it.href)}"${ext(it.href)}>
+      <span class="ct-icon">${it.ic}</span>
+      <span class="min-w-0"><span class="ct-label">${esc(it.label)}</span><span class="ct-value">${esc(it.value)}</span></span>
+      <span class="ct-arrow" aria-hidden="true">→</span>
+    </a>`).join("");
+  return `
+  <section class="ct-section" id="contact">
+    ${GRID_BG}
+    <div class="ct-layout">
+      ${has(c.photo) ? `<div class="ct-photo"><img src="${esc(c.photo)}" alt="${esc(c.photoAlt)}" onerror="this.parentNode.remove()"></div>` : ""}
+      <div>
+        <span class="ct-eyebrow">${String(n).padStart(2, "0")} // contact</span>
+        <h2 class="ct-title">${rich(c.headline, c.highlight)}</h2>
+        <p class="ct-body">${esc(c.body)}</p>
+        <div class="ct-list">${rows}</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function render() {
+  document.title = SITE.htmlTitle;
+
+  // sections in order; numbered automatically (hero is unnumbered)
+  const sections = [
+    { id: "about",        label: "About",        build: aboutHTML },
+    { id: "skills",       label: "Skills",       build: skillsHTML },
+    { id: "projects",     label: "Projects",     build: projectsHTML },
+    { id: "achievements", label: "Achievements", build: achievementsHTML, show: has(SITE.achievements) },
+    { id: "contact",      label: "Contact",      build: contactHTML }
+  ].filter((s) => s.show !== false && (SITE.sections || {})[s.id] !== false);
+
+  document.getElementById("hero-slot").innerHTML = heroHTML();
+  if (has(SITE.heroPhoto)) document.querySelector("#hero-wrap .fade").insertAdjacentHTML("afterend",
+    `<img class="hero-photo" src="${esc(SITE.heroPhoto)}" alt="${esc(SITE.about.photoAlt)}" onerror="this.remove()">`);
+  document.getElementById("app").innerHTML = storyHTML() + sections.map((s, i) => s.build(i + 1)).join("");
+
+  document.getElementById("brand").innerHTML = `<span>${esc(SITE.brand)}</span><span class="custom-cursor ml-0.5"></span>`;
+  // header tabs: one per project frame in the story (each jumps straight to that project)
+  const tabs = (SITE.story || []).map((s, i) => (s.kind === "project" ? { id: `story-${i + 1}`, label: s.title } : null)).filter(Boolean);
+  document.getElementById("nav").innerHTML = tabs.map((s) => `<a class="${navLink} nav-link" data-target="${s.id}" href="#${s.id}">${esc(s.label)}</a>`).join("");
+  document.getElementById("mobile-nav").innerHTML = tabs.map((s) => `<a class="${navLink} nav-link py-2" data-target="${s.id}" href="#${s.id}">${esc(s.label)}</a>`).join("");
+
+  const actions = [];
+  if (has(L.resume)) actions.push(`<a class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-DEFAULT border border-border-subtle bg-surface-card hover:border-primary-container text-text-primary hover:text-primary-container font-label-mono text-label-mono transition-colors" href="${esc(L.resume)}"${ext(L.resume)}>${icon("description", 16)}<span>Resume</span></a>`);
+  if (has(L.github)) actions.push(`<a class="hidden md:inline-flex p-1 text-text-secondary hover:text-primary-container transition-colors" href="${esc(L.github)}"${ext(L.github)} aria-label="GitHub">${githubIcon(20)}</a>`);
+  document.getElementById("header-actions").innerHTML = actions.join("");
+
+  const fl = "text-text-muted font-label-mono text-label-mono transition-colors duration-150 hover:text-primary-container";
+  document.getElementById("footer").innerHTML = `
+    <div class="flex flex-col md:flex-row justify-between items-center max-w-[1120px] mx-auto px-gutter-mobile md:px-gutter gap-4">
+      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+        <span class="font-label-mono text-label-mono text-text-primary font-bold">${esc(SITE.brand)}</span>
+        <span class="hidden sm:inline text-text-muted">|</span>
+        <p class="font-caption text-caption text-text-muted">© ${new Date().getFullYear()} ${esc(SITE.brand)}</p>
+      </div>
+      <div class="flex items-center gap-6">
+        ${has(L.github) ? `<a class="${fl}" href="${esc(L.github)}"${ext(L.github)}>GitHub</a>` : ""}
+        ${has(L.linkedin) ? `<a class="${fl}" href="${esc(L.linkedin)}"${ext(L.linkedin)}>LinkedIn</a>` : ""}
+        ${has(L.email) ? `<a class="${fl}" href="mailto:${esc(L.email)}">Email</a>` : ""}
+      </div>
+    </div>`;
+
+  // mobile menu toggle
+  const btn = document.getElementById("menu-btn"), panel = document.getElementById("mobile-nav");
+  const setMenu = (open) => { panel.classList.toggle("hidden", !open); panel.classList.toggle("flex", open); btn.setAttribute("aria-expanded", String(open)); };
+  btn.onclick = () => setMenu(panel.classList.contains("hidden"));
+  panel.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setMenu(false)));
+
+  // reminder in the console while placeholders remain
+  const left = (JSON.stringify(SITE).match(/TODO:/g) || []).length;
+  if (left) console.warn(`[portfolio] ${left} TODO placeholder(s) still in SITE — replace before sharing.`);
+}
+render();
+
+/* ---------- hero fiber background (WebGL) ---------- */
+function ghostFibers(canvas, o) {
+  const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
+  if (!gl) { canvas.style.background = `radial-gradient(ellipse at 70% 50%, ${o.glowColor}, #05060c 70%)`; return; }
+
+  const vs = `attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const fs = `
+  precision highp float;
+  uniform vec2 uRes; uniform float uTime;
+  uniform vec3 uLine, uGlow;
+  uniform float uScale,uRot,uRotSpeed,uLayers,uWaveAmp,uWaveFreq,uWaveSpeed,uLayerSpeed,
+                uTwist,uTwistFreq,uTwistSpeed,uLineFreq,uLineSpacing,uSharp,uFalloff,
+                uGlowI,uBright,uBlue,uVig,uGrain,uLight;
+  float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+  void main(){
+    vec2 uv=(gl_FragCoord.xy-.5*uRes)/uRes.y;
+    float a=uRot+uTime*uRotSpeed*.05;
+    uv=mat2(cos(a),-sin(a),sin(a),cos(a))*uv*uScale;
+    vec3 col=vec3(0.);
+    for(int i=0;i<8;i++){
+      float fi=float(i);
+      if(fi>=uLayers) break;
+      float t=uTime*(uWaveSpeed+fi*uLayerSpeed);
+      vec2 q=uv;
+      q.x+=sin(q.y*uTwistFreq+uTime*uTwistSpeed*.15+fi)*uTwist;
+      float v=q.y*uLineFreq;
+      v+=sin(q.x*uWaveFreq+t*3.+fi*1.7)*uWaveAmp*60.;
+      v+=sin(q.x*uWaveFreq*.47-t*2.+fi*3.1)*uWaveAmp*35.;
+      float f=fract(v/uLineSpacing+fi*.37);
+      float d=min(f,1.-f);
+      float line=pow(max(1.-d*2.,0.),uSharp);
+      float glow=exp(-d*uFalloff);
+      float ghost=.35+.65*smoothstep(-.6,1.,sin(q.x*1.1+fi*2.3+uTime*.2));
+      float w=1./(1.+fi*.7);
+      col+=(uLine*line*4.+uGlow*(line*.8+glow*.25)*uGlowI)*w*ghost;
+    }
+    col*=uBright; col.b*=uBlue;
+    vec2 s=gl_FragCoord.xy/uRes-.5;
+    col*=1.-uVig*smoothstep(.25,.85,length(s*vec2(1.,1.2)));
+    col+=(hash(gl_FragCoord.xy+fract(uTime))-.5)*uGrain;
+    col=mix(col,1.-col*.85,uLight);
+    gl_FragColor=vec4(max(col,0.),1.);
+  }`;
+
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hex = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  gl.uniform3fv(U("uLine"), hex(o.lineColor)); gl.uniform3fv(U("uGlow"), hex(o.glowColor));
+  const f = { uScale:o.scale, uRot:o.rotation, uRotSpeed:o.rotationSpeed, uLayers:o.layers, uWaveAmp:o.waveAmplitude,
+    uWaveFreq:o.waveFrequency, uWaveSpeed:o.waveSpeed, uLayerSpeed:o.layerSpeed, uTwist:o.twist, uTwistFreq:o.twistFrequency,
+    uTwistSpeed:o.twistSpeed, uLineFreq:o.lineFrequency, uLineSpacing:o.lineSpacing, uSharp:o.lineSharpness,
+    uFalloff:o.glowFalloff, uGlowI:o.glowIntensity, uBright:o.brightness, uBlue:o.blueBoost, uVig:o.vignette,
+    uGrain:o.grain, uLight:o.lightMode ? 1 : 0 };
+  for (const k in f) gl.uniform1f(U(k), f[k]);
+  const uRes = U("uRes"), uTime = U("uTime");
+
+  const resize = () => {
+    const r = Math.min(o.dpr || 1, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, canvas.clientWidth * r | 0); canvas.height = Math.max(1, canvas.clientHeight * r | 0);
+    gl.viewport(0, 0, canvas.width, canvas.height); gl.uniform2f(uRes, canvas.width, canvas.height);
+  };
+  const draw = (t) => { gl.uniform1f(uTime, t * o.speed); gl.drawArrays(gl.TRIANGLES, 0, 3); };
+  const still = o.paused || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  new ResizeObserver(() => { resize(); if (still) draw(8); }).observe(canvas);
+  resize();
+
+  if (still) { draw(8); return; }   // single still frame
+
+  // animate only while the hero is on screen, capped at o.fps
+  let last = 0, raf = 0; const t0 = performance.now(), step = 1000 / o.fps;
+  const panel = () => canvas.closest(".hs-panel");
+  const loop = (now) => { raf = requestAnimationFrame(loop);
+    if (now - last < step - 1) return;
+    const pn = panel(); if (pn && pn.classList.contains("hs-off")) return; last = now; draw((now - t0) / 1000); };
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !raf) raf = requestAnimationFrame(loop);
+    else if (!e.isIntersecting) { cancelAnimationFrame(raf); raf = 0; }
+  }).observe(canvas);
+  raf = requestAnimationFrame(loop);
+}
+if (FIBERS.enabled) { try { ghostFibers(document.getElementById("fibers"), FIBERS); } catch (e) { console.error("[fibers]", e); } }
+
+/* ---------- moving square grid behind every frame except the first (ShapeGrid look, square shape) ----------
+   Drawn with CSS gradients instead of a canvas per frame (a full-screen canvas for each of ~15 frames would
+   cost a lot of memory). One loop moves the grid of whichever frames are on screen and places the hover square. */
+function gridBackgrounds(o) {
+  const S = o.squareSize, root = document.documentElement.style;
+  root.setProperty("--grid-size", S + "px"); root.setProperty("--grid-line", o.borderColor);
+  root.setProperty("--grid-hover", o.hoverFillColor); root.setProperty("--grid-fade", o.fadeTo);
+  const d = o.direction;
+  const dir = { x: d === "right" || d === "diagonal" ? 1 : d === "left" ? -1 : 0, y: d === "down" || d === "diagonal" ? 1 : d === "up" ? -1 : 0 };
+  let ox = 0, oy = 0, last = 0, mouse = null;
+  const cells = new Map();   // grid element -> hovered cell {x, y} (in grid units, so it drifts with the grid like ShapeGrid)
+  const visible = new Set();
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+  document.querySelectorAll(".grid-bg").forEach((el) => io.observe(el));
+  const showing = (el) => !el.closest(".hs-panel.hs-off");
+
+  const place = (el) => {
+    const hv = el.firstChild, c = cells.get(el);
+    if (!c) { hv.style.display = "none"; return; }
+    hv.style.display = "block";
+    hv.style.transform = `translate(${ox + c.x * S}px, ${oy + c.y * S}px)`;
+  };
+  const pick = () => {
+    for (const el of visible) {
+      if (!mouse || !showing(el)) { cells.delete(el); place(el); continue; }
+      const r = el.getBoundingClientRect(), mx = mouse.x - r.left, my = mouse.y - r.top;
+      if (mx < 0 || my < 0 || mx > r.width || my > r.height) cells.delete(el);
+      else cells.set(el, { x: Math.floor((mx - ox) / S), y: Math.floor((my - oy) / S) });
+      place(el);
+    }
+  };
+  addEventListener("mousemove", (e) => { mouse = { x: e.clientX, y: e.clientY }; pick(); }, { passive: true });
+  document.addEventListener("mouseleave", () => { mouse = null; pick(); });
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;   // still grid
+  const loop = (now) => {
+    requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+    const step = Math.max(o.speed, 0.1) * dt * 60;   // speed = px per frame at 60fps
+    ox += dir.x * step; oy += dir.y * step;
+    if (Math.abs(ox) > 1e6 || Math.abs(oy) > 1e6) { ox %= S; oy %= S; cells.clear(); }
+    for (const el of visible) if (showing(el)) { el.style.backgroundPosition = `${ox}px ${oy}px`; place(el); }
+  };
+  requestAnimationFrame(loop);
+}
+if (GRID.enabled) try { gridBackgrounds(GRID); } catch (e) { console.error("[grid]", e); }
+
+/* ---------- hero name: 3D layered text ---------- */
+function depthText(el, o) {
+  const text = el.textContent.trim(); if (!text) return;
+  const rgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const [a, b] = [rgb(o.depthColor), rgb(o.depthColorEnd)];
+  const wrap = document.createElement("span"); wrap.className = "dt"; wrap.setAttribute("aria-hidden", "true");
+  wrap.style.perspective = o.perspective + "px"; if (!o.shadow) wrap.style.filter = "none";
+  const stack = document.createElement("span"); stack.className = "dt-stack";
+  for (let i = o.layers; i >= 1; i--) {   // back to front; colour runs from depthColor (just behind the face) to depthColorEnd
+    const k = (i - 1) / Math.max(1, o.layers - 1), s = document.createElement("span");
+    s.className = "dt-layer"; s.textContent = text;
+    s.style.transform = `translateZ(${(-i * o.depth).toFixed(3)}em)`;
+    s.style.color = `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * k)).join(",")})`;
+    stack.appendChild(s);
+  }
+  const face = document.createElement("span"); face.className = "dt-face"; face.textContent = text; face.style.color = o.faceColor;
+  stack.appendChild(face); wrap.appendChild(stack);
+  el.setAttribute("aria-label", text); el.textContent = ""; el.appendChild(wrap);
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    stack.style.transform = `rotateX(${o.tilt * 0.4}deg) rotateY(${-o.tilt * 0.6}deg)`; return;
+  }
+  let tx = 0, ty = 0, cx = 0, cy = 0, lastMove = -1e9, raf = 0;
+  const t0 = performance.now();
+  if (o.pointerTracking) addEventListener("pointermove", (e) => {
+    tx = -((e.clientY / innerHeight) - 0.5) * 2 * o.tilt; ty = ((e.clientX / innerWidth) - 0.5) * 2 * o.tilt;
+    lastMove = performance.now();
+  }, { passive: true });
+  const loop = (now) => {
+    raf = requestAnimationFrame(loop);
+    const pn = el.closest(".hs-panel"); if (pn && pn.classList.contains("hs-off")) return;
+    let ax = tx, ay = ty;
+    if (o.autoOrbit && now - lastMove > 2500) {   // pointer idle: slow orbit
+      const t = (now - t0) / 1000 * o.orbitSpeed; ax = Math.sin(t) * o.tilt * 0.6; ay = Math.cos(t) * o.tilt;
+    }
+    cx += (ax - cx) * o.smoothing; cy += (ay - cy) * o.smoothing;
+    stack.style.transform = `rotateX(${cx.toFixed(2)}deg) rotateY(${cy.toFixed(2)}deg)`;
+  };
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting && !raf) raf = requestAnimationFrame(loop);
+    else if (!e.isIntersecting) { cancelAnimationFrame(raf); raf = 0; }
+  }).observe(el);
+}
+if (DEPTH_TEXT.enabled) { const h = document.querySelector("#hero h1"); if (h) try { depthText(h, DEPTH_TEXT); } catch (e) { console.error("[depth]", e); } }
+
+/* ---------- cards: glow on the edge nearest the pointer ---------- */
+function borderGlow(o) {
+  const els = [...document.querySelectorAll(o.targets)];
+  els.forEach((el) => {
+    el.classList.add("bglow");
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    el.style.setProperty("--spread", o.coneSpread + "deg");
+    el.style.setProperty("--glow-r", o.glowRadius + "px");
+    el.style.setProperty("--glow-rgb", o.glowRgb);
+    o.colors.forEach((c, i) => el.style.setProperty(`--gc${i + 1}`, c));
+  });
+  let px = -1e4, py = -1e4, pending = false;
+  const run = () => {
+    pending = false;
+    for (const el of els) {
+      const r = el.getBoundingClientRect(); if (!r.width) continue;
+      const x = px - r.left, y = py - r.top;
+      const dx = x < 0 ? -x : x > r.width ? x - r.width : 0, dy = y < 0 ? -y : y > r.height ? y - r.height : 0;
+      // distance to the nearest edge, from outside or inside the card
+      const dist = dx || dy ? Math.hypot(dx, dy) : Math.min(x, r.width - x, y, r.height - y);
+      const edge = Math.max(0, 1 - dist / o.edgeSensitivity) * o.glowIntensity;
+      el.style.setProperty("--edge", edge.toFixed(3));
+      if (edge > 0) {
+        el.style.setProperty("--ang", (Math.atan2(x - r.width / 2, -(y - r.height / 2)) * 180 / Math.PI).toFixed(1) + "deg");
+        el.style.setProperty("--gx", x.toFixed(0) + "px"); el.style.setProperty("--gy", y.toFixed(0) + "px");
+      }
+    }
+  };
+  addEventListener("pointermove", (e) => { px = e.clientX; py = e.clientY; if (!pending) { pending = true; requestAnimationFrame(run); } }, { passive: true });
+}
+if (BORDER_GLOW.enabled) try { borderGlow(BORDER_GLOW); } catch (e) { console.error("[glow]", e); }
+
+/* ---------- picture viewer: click a project picture to see it large ---------- */
+function lightbox() {
+  const lb = document.createElement("div");
+  lb.className = "lb"; lb.hidden = true;
+  lb.setAttribute("role", "dialog"); lb.setAttribute("aria-modal", "true"); lb.setAttribute("aria-label", "Image viewer");
+  lb.innerHTML = `<img class="lb-img" alt="">
+    <button class="lb-btn lb-close" aria-label="Close">${icon("close", 22)}</button>
+    <button class="lb-btn lb-prev" aria-label="Previous image">${icon("chevron_left", 28)}</button>
+    <button class="lb-btn lb-next" aria-label="Next image">${icon("chevron_right", 28)}</button>
+    <div class="lb-count"></div>`;
+  document.body.appendChild(lb);
+  const big = lb.querySelector(".lb-img"), count = lb.querySelector(".lb-count");
+  let list = [], idx = 0, src = null, closeT = 0;
+
+  // as large as the screen allows, but at most 1.75x the file's own size (bigger just gets blurry)
+  const fit = (im) => {
+    const nw = im.naturalWidth, nh = im.naturalHeight, s = Math.min(innerWidth * 0.9 / nw, innerHeight * 0.84 / nh, 1.75);
+    return { x: (innerWidth - nw * s) / 2, y: (innerHeight - nh * s) / 2, w: nw * s, h: nh * s };
+  };
+  const place = (r) => Object.assign(big.style, { left: r.x + "px", top: r.y + "px", width: r.w + "px", height: r.h + "px" });
+  // transform that makes the big picture sit exactly over the small one (for the zoom in/out)
+  const over = (el, r) => { const b = el.getBoundingClientRect(); return `translate(${b.left - r.x}px, ${b.top - r.y}px) scale(${b.width / r.w}, ${b.height / r.h})`; };
+
+  function show(i, zoomFromThumb) {
+    idx = (i + list.length) % list.length; src = list[idx];
+    big.src = src.currentSrc || src.src; big.alt = src.alt;
+    const r = fit(src); place(r);
+    count.textContent = list.length > 1 ? `${idx + 1} / ${list.length}` : "";
+    lb.classList.toggle("single", list.length < 2);
+    if (zoomFromThumb) { big.style.transition = "none"; big.style.transform = over(src, r); big.getBoundingClientRect(); big.style.transition = ""; }
+    big.style.transform = "none";
+  }
+  function open(img) {
+    clearTimeout(closeT);
+    list = [...img.closest(".st-gallery").querySelectorAll(".st-pic img")].filter((im) => im.naturalWidth);
+    lb.hidden = false; document.documentElement.classList.add("lb-open");
+    show(list.indexOf(img), true);
+    lb.getBoundingClientRect(); lb.classList.add("open");   // reflow first so the fade-in still animates
+    lb.querySelector(".lb-close").focus({ preventScroll: true });
+  }
+  function close() {
+    if (lb.hidden || !lb.classList.contains("open")) return;
+    lb.classList.remove("open");
+    big.style.transform = over(src, fit(src));   // shrink back onto the thumbnail
+    closeT = setTimeout(() => { lb.hidden = true; big.style.transform = ""; document.documentElement.classList.remove("lb-open"); }, 380);
+  }
+
+  document.addEventListener("click", (e) => {
+    const img = e.target.closest(".st-pic img");
+    if (img && img.naturalWidth && lb.hidden) { e.preventDefault(); open(img); }
+  });
+  lb.addEventListener("click", (e) => {
+    if (e.target.closest(".lb-prev")) show(idx - 1);
+    else if (e.target.closest(".lb-next")) show(idx + 1);
+    else close();   // backdrop, the picture itself, or the × button
+  });
+  addEventListener("keydown", (e) => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") show(idx - 1);
+    else if (e.key === "ArrowRight") show(idx + 1);
+    else if (!/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key)) return;   // those would scroll the page behind
+    e.preventDefault();
+  });
+  // no scrolling the page behind the viewer
+  const block = (e) => { e.preventDefault(); e.stopPropagation(); };
+  lb.addEventListener("wheel", block, { passive: false });
+  lb.addEventListener("touchmove", block, { passive: false });
+  addEventListener("resize", () => { if (!lb.hidden) place(fit(src)); });
+}
+lightbox();
+
+/* ---------- frames: vertical scroll plays a transition between stacked frames ---------- */
+const HS = (() => {
+  const st = { on: false, pos: 0, ids: [] };
+  const heroWrap = document.getElementById("hero-wrap");
+  const app = document.getElementById("app");
+  let root, stage, ov = {}, panels = [], anchor, vh = 0, step = 0, sw = 0, sh = 0;   // ov = extra effect layers above the frames
+
+  const want = () => FRAMES.enabled && innerWidth >= FRAMES.minWidth && innerHeight >= FRAMES.minHeight &&
+    !matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const inner = (p) => p.firstChild, dim = (p, v) => (p.lastChild.style.opacity = v);
+  const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+
+  // each transition gets (current frame, next frame, eased progress 0..1)
+  const FX = {
+    expand(c, n, e) {
+      // next frame starts as a small floating window (a mini version of the page) and grows to full
+      const r = 1 - e, s = 0.42 + 0.58 * e;
+      n.style.transform = `translate3d(0,${r * 34}%,0) scale(${s})`;
+      n.style.borderRadius = `${(r * 28) / s}px`;
+      n.style.boxShadow = `0 0 0 ${1 / s}px rgba(0,102,255,${0.6 * r}), 0 0 24px rgba(0,240,255,${0.3 * r}), 0 30px 80px rgba(0,0,0,${0.7 * r})`;
+      c.style.transform = `scale(${1 - 0.08 * e})`; dim(c, 0.7 * e);
+    },
+    slide(c, n, e) {
+      c.style.transform = `translate3d(${-e * 100}%,0,0)`;
+      inner(c).style.transform = `translate3d(${-e * 22}%,0,0)`; inner(c).style.opacity = 1 - 0.6 * e;
+      n.style.transform = `translate3d(${(1 - e) * 100}%,0,0)`;
+      inner(n).style.transform = `translate3d(${(1 - e) * 22}%,0,0)`; inner(n).style.opacity = 0.4 + 0.6 * e;
+    },
+    cover(c, n, e) {
+      const r = (1 - e) * 32;
+      n.style.transform = `translate3d(0,${(1 - e) * 100}%,0)`;
+      n.style.borderRadius = `${r}px ${r}px 0 0`; n.style.boxShadow = "0 -24px 60px rgba(0,0,0,.55)";
+      c.style.transform = `translateY(${-e * 3}%) scale(${1 - 0.1 * e})`;
+      c.style.borderRadius = `${e * 24}px`; dim(c, 0.7 * e);
+    },
+    iris(c, n, e) {
+      n.style.clipPath = `circle(${e * 75}% at 50% 55%)`;
+      inner(n).style.transform = `scale(${1.1 - 0.1 * e})`;
+      inner(c).style.transform = `scale(${1 + 0.12 * e})`; dim(c, 0.6 * e);
+      // glowing ring on the circle edge (same radius math as clip-path circle())
+      const R = e * 0.75 * Math.hypot(sw, sh) / Math.SQRT2;
+      Object.assign(ov.ring.style, { display: "block", width: 2 * R + "px", height: 2 * R + "px", opacity: String(Math.min(1, (1 - e) * 3)) });
+    },
+    zoom(c, n, e) {
+      // current frame flies toward you and fades, then the next one settles in (no overlap)
+      inner(c).style.transform = `scale(${1 + 0.35 * e})`; inner(c).style.opacity = Math.max(0, 1 - e / 0.55);
+      n.style.opacity = Math.max(0, (e - 0.45) / 0.55); inner(n).style.transform = `scale(${0.85 + 0.15 * e})`;
+    },
+    zoomout(c, n, e) {
+      // reverse of zoom: current frame shrinks into the distance, next one comes down from in front of you
+      inner(c).style.transform = `scale(${1 - 0.35 * e})`; inner(c).style.opacity = Math.max(0, 1 - e / 0.55);
+      n.style.opacity = Math.max(0, (e - 0.45) / 0.55); inner(n).style.transform = `scale(${1.25 - 0.25 * e})`;
+    },
+    fade(c, n, e) {
+      // fade out to dark, then fade in (the two frames never overlap)
+      inner(c).style.opacity = Math.max(0, 1 - e * 2); inner(c).style.transform = `translate3d(0,${-e * 30}px,0)`;
+      n.style.opacity = Math.max(0, e * 2 - 1); inner(n).style.transform = `translate3d(0,${(1 - e) * 30}px,0)`;
+    },
+    drop(c, n, e) {
+      // a drop falls to the middle; where it lands the next frame spreads out like a ripple of water
+      const W = sw, H = sh, cx = W / 2, cy = H * 0.55, hit = 0.3;
+      if (e < hit) {
+        const a = e / hit;
+        n.style.clipPath = "circle(0px at 50% 55%)";
+        Object.assign(ov.drop.style, { display: "block", opacity: "1",
+          transform: `translateY(${-40 + (cy - 11 + 40) * a * a}px) scale(${1 - 0.15 * a},${1 + 0.35 * a}) rotate(45deg)` });
+        return;
+      }
+      const k = (e - hit) / (1 - hit), R = k * Math.hypot(cx, cy) * 1.02, wob = 0.09 * (1 - k), pts = [];
+      // wobbly circle: the edge ripples like liquid and settles into a clean circle as it grows
+      for (let j = 0; j < 48; j++) {
+        const th = (j / 48) * Math.PI * 2;
+        const r = R * (1 + wob * Math.sin(6 * th + k * 9) + wob * 0.5 * Math.sin(11 * th - k * 13));
+        pts.push(`${(cx + r * Math.cos(th)).toFixed(1)}px ${(cy + r * Math.sin(th)).toFixed(1)}px`);
+      }
+      n.style.clipPath = `polygon(${pts.join(",")})`;
+      inner(n).style.transform = `scale(${1.08 - 0.08 * k})`;
+      inner(c).style.transform = `scale(${1 + 0.04 * k})`; dim(c, 0.55 * k);
+      // two ripples running out ahead of the edge
+      [[ov.ring, 1.18, 1], [ov.ring2, 1.45, 0.6]].forEach(([el, m, o]) => {
+        const d = 2 * R * m;
+        Object.assign(el.style, { display: "block", width: d + "px", height: d + "px", opacity: String(o * Math.min(1, (1 - k) * 2.5)) });
+      });
+      // the drop squashes and disappears right after it lands
+      if (k < 0.2) Object.assign(ov.drop.style, { display: "block", opacity: String(1 - k / 0.2),
+        transform: `translateY(${cy - 11}px) scale(${1 + k * 4},${1 - k * 3}) rotate(45deg)` });
+    },
+    cube(c, n, e) {
+      // the page turns like a cube: current face swings away to the left, the next face comes round from the right
+      stage.style.perspective = "1800px";
+      c.style.backfaceVisibility = n.style.backfaceVisibility = "hidden";   // never show a face from behind (mirrored)
+      c.style.transformOrigin = "100% 50%"; c.style.transform = `translateX(${-e * 100}%) rotateY(${-90 * e}deg)`;
+      n.style.transformOrigin = "0% 50%"; n.style.transform = `translateX(${(1 - e) * 100}%) rotateY(${90 * (1 - e)}deg)`;
+      dim(c, 0.6 * e); dim(n, 0.6 * (1 - e));
+    },
+    split(c, n, e) {
+      // the next frame opens up and down from a thin glowing line in the middle, like a screen switching on
+      const H = sh, gap = (1 - e) * 50, o = String(Math.min(1, (1 - e) * 4));
+      n.style.clipPath = `inset(${gap}% 0 ${gap}% 0)`;
+      inner(n).style.transform = `scale(${1.06 - 0.06 * e})`;
+      inner(c).style.transform = `scale(${1 - 0.06 * e})`; dim(c, 0.7 * e);
+      Object.assign(ov.lineA.style, { display: "block", top: (gap / 100) * H + "px", opacity: o });
+      Object.assign(ov.lineB.style, { display: "block", top: (1 - gap / 100) * H + "px", opacity: o });
+    },
+    glitch(c, n, e) {
+      // torn bands of the next frame flash in, colours split, then it snaps into place
+      const k = Math.floor(e * 18), amp = Math.sin(Math.PI * e);
+      const rnd = (s) => { const x = Math.sin(k * 91.7 + s * 47.3) * 43758.5453; return x - Math.floor(x); };
+      const rgb = (px) => `drop-shadow(${px}px 0 0 rgba(255,0,90,.6)) drop-shadow(${-px}px 0 0 rgba(0,240,255,.6))`;
+      const jit = (s) => `translate3d(${((rnd(s) - 0.5) * 60 * amp).toFixed(1)}px,0,0)`;
+      if (e < 0.55) {
+        const y = rnd(1) * 85, h = 3 + rnd(2) * 25 * amp;
+        n.style.clipPath = rnd(3) < 0.25 + e ? `inset(${y}% 0 ${Math.max(0, 100 - y - h)}% 0)` : "inset(0 0 100% 0)";
+        inner(n).style.transform = jit(4);
+        inner(c).style.transform = jit(5); inner(c).style.filter = rgb(6 * amp);
+      } else {
+        inner(n).style.transform = jit(6); inner(n).style.filter = rgb(6 * amp);
+      }
+    }
+  };
+  // some transitions need a bit longer in step mode to read well (multiplies stepDuration)
+  const FX_TIME = { drop: 1.5, cube: 1.15, fade: 1.2 };
+  const nameFor = (i) => { const list = FRAMES.transitions || []; return list[i % (list.length || 1)]; };
+  const fxFor = (i) => FX[nameFor(i)] || FX.slide;
+
+  function reset(p) {
+    p.style.transform = p.style.clipPath = p.style.opacity = p.style.borderRadius = p.style.boxShadow = p.style.transformOrigin = p.style.pointerEvents = p.style.backfaceVisibility = "";
+    inner(p).style.transform = inner(p).style.opacity = inner(p).style.filter = ""; dim(p, 0);
+  }
+
+  function layout() {
+    vh = innerHeight; step = vh * FRAMES.scrollPerFrame;
+    sw = stage.clientWidth; sh = stage.clientHeight;   // cached so the transitions don't force a layout every frame
+    root.style.height = vh + (panels.length - 1) * step + "px";
+    root.querySelectorAll(".hs-snap").forEach((m) => m.remove());
+    if (FRAMES.snap && !FRAMES.stepMode) panels.forEach((_, i) => {
+      const m = document.createElement("div"); m.className = "hs-snap"; m.style.top = i * step + "px"; root.appendChild(m);
+    });
+    update();
+  }
+
+  function update() {
+    if (!st.on) return;
+    const n = panels.length;
+    const p = Math.min(1, Math.max(0, (scrollY - root.offsetTop) / ((n - 1) * step)));
+    let pos = p * (n - 1);
+    // scroll positions get rounded to whole pixels, so a resting frame can read as 8.0003; without this
+    // the leftover fraction would start the next transition and show a sliver of the next frame
+    const whole = Math.round(pos); if (Math.abs(pos - whole) < 0.004) pos = whole;
+    st.pos = pos;
+    let a = Math.floor(pos), t = pos - a;
+    if (a >= n - 1) { a = n - 1; t = 0; }
+    // step mode: animateTo() already eases the motion, so progress stays linear here
+    // (an extra ease per frame would make chained frame changes pause at every frame)
+    const h = FRAMES.stepMode ? 0 : Math.min(0.4, Math.max(0, FRAMES.hold || 0));
+    const k = Math.min(1, Math.max(0, (t - h) / (1 - 2 * h)));
+    const e = FRAMES.stepMode ? k : ease(k);
+    for (const o in ov) ov[o].style.display = "none";
+    stage.style.perspective = "";
+    panels.forEach((pn, i) => {
+      reset(pn);
+      const show = i === a || (i === a + 1 && e > 0);
+      // neighbours stay painted but invisible, so the next transition starts without a first-paint hitch
+      const warm = !show && i >= a - 1 && i <= a + 2;
+      pn.style.visibility = show || warm ? "visible" : "hidden";
+      if (warm) { pn.style.opacity = "0"; pn.style.pointerEvents = "none"; }
+      pn.classList.toggle("hs-off", !show);
+      // a frame's own intro (description first, then pictures) plays once it has come to rest and
+      // resets once it is off screen, so it replays every time you come back to it
+      if (!show) inner(pn).firstChild.classList.remove("st-play");
+    });
+    if (e === 0) inner(panels[a]).firstChild.classList.add("st-play");
+    if (a < n - 1 && e > 0) fxFor(a)(panels[a], panels[a + 1], e);
+  }
+
+  function enter() {
+    anchor = document.createComment("hero"); heroWrap.before(anchor);
+    root = document.createElement("div"); root.id = "hs";
+    root.innerHTML = '<div id="hs-sticky"></div>';
+    app.before(root); stage = root.firstChild;
+    const items = [heroWrap, ...app.querySelectorAll(":scope > section")];
+    panels = items.map((el, i) => {
+      const p = document.createElement("div"); p.className = "hs-panel" + (el === heroWrap ? " hs-hero" : "");
+      p.style.zIndex = i;
+      const inn = document.createElement("div"); inn.className = "hs-inner"; inn.appendChild(el);
+      const d = document.createElement("div"); d.className = "hs-dim";
+      p.append(inn, d); stage.appendChild(p);
+      // a section's .panel-bg (e.g. the contact grid) moves out to cover the whole frame, not just the content column
+      const bg = el !== heroWrap && el.querySelector(":scope > .panel-bg");
+      if (bg) { inn.after(bg); p._bg = bg; }
+      return p;
+    });
+    ov = {};
+    [["ring", "hs-ring"], ["ring2", "hs-ring"], ["drop", "hs-drop"], ["lineA", "hs-line"], ["lineB", "hs-line"]].forEach(([k, cls]) => {
+      const el = document.createElement("div"); el.className = cls; el.style.zIndex = panels.length + 1;
+      stage.appendChild(el); ov[k] = el;
+    });
+    st.ids = items.map((el) => (el === heroWrap ? null : el.id));
+    st.on = true;
+    document.documentElement.classList.add("hs-on");
+    document.querySelectorAll(".reveal").forEach((el) => el.classList.add("in")); // frames replace the fade-in
+    document.querySelectorAll(".st-play").forEach((el) => el.classList.remove("st-play")); // frames decide when intros play
+    layout();
+    if (!fits()) { exit(); return; }
+    if (FRAMES.snap && !FRAMES.stepMode) document.documentElement.classList.add("hs-snapping");
+  }
+
+  // every frame must fit on one screen, otherwise fall back to normal scrolling
+  const fits = () => panels.every((p) => p.classList.contains("hs-hero") || inner(p).offsetHeight <= vh - 56 - 16);
+
+  function exit() {
+    cancelAnimationFrame(anim); busy = false;
+    panels.forEach((p) => {
+      const el = inner(p).firstChild;
+      if (p._bg) el.prepend(p._bg);
+      if (el === heroWrap) anchor.replaceWith(heroWrap); else app.appendChild(el);
+    });
+    root.remove(); panels = []; st.on = false; st.ids = [];
+    app.querySelectorAll(".story").forEach((el) => el.classList.add("st-play"));   // normal scrolling: just show them
+    document.documentElement.classList.remove("hs-on", "hs-snapping");
+  }
+
+  /* ---- step mode: one gesture = one whole frame change ---- */
+  const frameY = (i) => root.offsetTop + i * step;
+  const inZone = () => scrollY <= frameY(panels.length - 1) + 2;   // below that is the footer: normal scroll
+  let anim = 0, busy = false, armed = true, lastWheel = 0, lastAbs = 0, firedAt = 0, acc = 0, settleT = 0;
+  let x = 0, tw = null;   // x = position in frames; tw = the running move {from, to, t0, d}
+  // fast start, clean stop at an exact time (no slow creep at the end that looks like loading)
+  const easeOut = (s) => 1 - Math.pow(1 - s, 2.5);
+
+  // move from wherever the page is (even mid-transition) to frame i; update() turns the position into
+  // the transition, so going back plays it in reverse. New input restarts the move from the current
+  // spot at full speed, so chained frame changes never dip or pause where two transitions meet.
+  function animateTo(i) {
+    i = Math.max(0, Math.min(panels.length - 1, i));
+    if (busy && tw.to === i) return;
+    const from = busy ? x : (scrollY - root.offsetTop) / step, dist = Math.abs(i - from);
+    if (dist * step < 1) return;
+    const slow = dist < 1.5 ? FX_TIME[nameFor(Math.floor(Math.min(from, i) + 1e-6))] || 1 : 1;
+    const len = dist < 1 ? 0.5 + 0.5 * dist : Math.min(2.2, 1 + 0.3 * (dist - 1));
+    tw = { from, to: i, t0: performance.now(), d: (FRAMES.stepDuration || 900) * slow * len };
+    if (!busy) { busy = true; anim = requestAnimationFrame(tick); }
+  }
+  function tick(now) {
+    const s = Math.min(1, Math.max(0, (now - tw.t0) / tw.d));
+    x = tw.from + (tw.to - tw.from) * easeOut(s);
+    scrollTo({ top: root.offsetTop + x * step, behavior: "instant" });
+    update();   // draw this frame now instead of waiting for the scroll event one frame later
+    if (s < 1) anim = requestAnimationFrame(tick);
+    else { busy = false; armed = false; }
+  }
+  // (paused while the picture viewer is open, so arrows/wheel don't change frames behind it)
+  const stepOn = () => st.on && FRAMES.stepMode && !document.documentElement.classList.contains("lb-open");
+  const cur = () => Math.max(0, Math.min(panels.length - 1, Math.round((scrollY - root.offsetTop) / step)));
+  const base = () => (busy ? tw.to : cur());   // where the next step counts from
+  const atEnd = (dir) => dir > 0 && base() >= panels.length - 1;
+  // one step in a direction; at most one frame can be queued ahead of where the page is now
+  const go = (dir) => {
+    const i = base() + dir;
+    if (busy && Math.abs(i - x) > 2) return;
+    firedAt = performance.now(); animateTo(i);
+  };
+
+  // wheel / trackpad: ignore the momentum tail of the same flick, so one flick = one frame
+  addEventListener("wheel", (ev) => {
+    if (!stepOn() || ev.ctrlKey) return;
+    const dir = Math.sign(ev.deltaY); if (!dir) return;
+    if (!inZone() || (atEnd(dir) && !busy)) return;
+    ev.preventDefault();
+    const now = performance.now(), gap = now - lastWheel, abs = Math.abs(ev.deltaY), prev = lastAbs;
+    lastWheel = now; lastAbs = abs;
+    // after a step (even mid-animation), wait for a NEW gesture: a pause, a stronger push than the
+    // fading momentum, or steady mouse-wheel notches (which don't fade like trackpad momentum)
+    if (!armed) {
+      const newGesture = gap > 180 || abs > prev * 1.4 + 4 || (abs >= 50 && abs >= prev && gap > 30 && now - firedAt > 300);
+      if (newGesture) armed = true; else return;
+    }
+    acc = gap > 250 ? ev.deltaY : acc + ev.deltaY;
+    if (Math.abs(acc) < (FRAMES.stepThreshold || 20)) return;
+    acc = 0; armed = false; go(dir);
+  }, { passive: false });
+
+  // keyboard
+  addEventListener("keydown", (ev) => {
+    if (!stepOn() || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName)) return;
+    const k = ev.key;
+    if (k === "Home") { ev.preventDefault(); animateTo(0); return; }
+    const dir = (k === "ArrowDown" || k === "PageDown" || (k === " " && !ev.shiftKey)) ? 1
+              : (k === "ArrowUp" || k === "PageUp" || (k === " " && ev.shiftKey)) ? -1 : 0;
+    if (!dir || !inZone() || atEnd(dir)) return;
+    ev.preventDefault(); go(dir);
+  });
+
+  // touch screens (laptops with touch)
+  let ty = null;
+  addEventListener("touchstart", (ev) => { ty = stepOn() ? ev.touches[0].clientY : null; }, { passive: true });
+  addEventListener("touchmove", (ev) => {
+    if (ty === null || !inZone()) return;
+    const dir = Math.sign(ty - ev.touches[0].clientY);
+    if (dir && !atEnd(dir)) ev.preventDefault();
+  }, { passive: false });
+  addEventListener("touchend", (ev) => {
+    if (ty === null) return;
+    const dy = ty - ev.changedTouches[0].clientY, dir = Math.sign(dy); ty = null;
+    if (Math.abs(dy) > 40 && inZone() && !atEnd(dir)) go(dir);
+  });
+
+  // anything else that leaves the page between frames (dragging the scrollbar) settles on the nearest one
+  function settle() {
+    clearTimeout(settleT);
+    if (!stepOn() || busy) return;
+    settleT = setTimeout(() => {
+      if (!stepOn() || busy || !inZone()) return;
+      if (Math.abs(scrollY - frameY(cur())) > 2) animateTo(cur());
+    }, 160);
+  }
+  addEventListener("scroll", settle, { passive: true });
+
+  function goTo(id) {
+    const el = document.getElementById(id); if (!el) return false;
+    const i = panels.findIndex((p) => p.contains(el)); if (i < 0) return false;
+    if (FRAMES.stepMode) animateTo(i); else scrollTo({ top: frameY(i), behavior: "smooth" });
+    return true;
+  }
+
+  // start after styles/fonts are in, so the fit check measures the real layout
+  const start = () => {
+    if (want() && !st.on) enter();
+    if (document.fonts) document.fonts.ready.then(() => { if (st.on && !fits()) exit(); });
+  };
+  if (document.readyState === "complete") start(); else addEventListener("load", start);
+  addEventListener("scroll", update, { passive: true });
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => {
+    if (want() !== st.on) { st.on ? exit() : enter(); } else if (st.on) layout();
+  }, 150); });
+
+  // in-page links (nav, "→ project" links) jump to the right frame
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]'); if (!a || !st.on) return;
+    const id = a.getAttribute("href").slice(1);
+    if (id === "hero") { e.preventDefault(); if (FRAMES.stepMode) animateTo(0); else scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (id && goTo(id)) { e.preventDefault(); history.replaceState(null, "", "#" + id); }
+  });
+
+  return {
+    get on() { return st.on; },
+    activeId: () => st.ids[Math.round(st.pos)] || null
+  };
+})();
+
+/* ---------- scroll tracking: progress bar + active section in nav ---------- */
+(() => {
+  const bar = document.getElementById("progress");
+  const links = [...document.querySelectorAll(".nav-link")];
+  const ids = [...new Set(links.map((a) => a.dataset.target))];
+  const secs = ids.map((id) => document.getElementById(id)).filter(Boolean);
+  let current = null, ticking = false;
+
+  const update = () => {
+    ticking = false;
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - window.innerHeight;
+    const y = window.scrollY;
+    bar.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
+
+    // frames: the tab of the frame on screen (none on story/contact frames);
+    // normal scroll: the last tabbed section whose top has passed 35% of the screen
+    let id = null;
+    if (HS.on) id = HS.activeId();
+    else { const line = window.innerHeight * 0.35;
+      for (const s of secs) if (s.getBoundingClientRect().top <= line) id = s.id; }
+
+    if (id !== current) {
+      current = id;
+      links.forEach((a) => {
+        const on = a.dataset.target === id;
+        a.classList.toggle("active", on);
+        if (on) a.setAttribute("aria-current", "location"); else a.removeAttribute("aria-current");
+      });
+    }
+  };
+  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
+})();
+
+/* ---------- scroll reveal ---------- */
+(() => {
+  const els = document.querySelectorAll("#app section > div:first-child, #app section > div:not(:first-child) > *, #app .relative.pl-6 > div");
+  els.forEach((el, i) => { el.classList.add("reveal"); el.style.transitionDelay = (i % 3) * 90 + "ms"; });
+  if (!("IntersectionObserver" in window)) { els.forEach((el) => el.classList.add("in")); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+  }), { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+  els.forEach((el) => io.observe(el));
+
+  // project galleries in normal scrolling (phones): play the intro when the frame is mostly on screen
+  const io2 = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!HS.on && e.isIntersecting) { e.target.classList.add("st-play"); io2.unobserve(e.target); }
+  }), { threshold: 0.35 });
+  document.querySelectorAll(".st-gallery").forEach((g) => io2.observe(g.closest(".story")));
+})();
+</script>
+</body>
+</html>
