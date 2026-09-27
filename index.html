@@ -280,6 +280,14 @@
   .ct-arrow { margin-left:auto; font-family:"JetBrains Mono",monospace; color:#64748B; transition:transform .25s ease, color .25s ease; }
   .ct-row:hover .ct-value, .ct-row:hover .ct-arrow { color:#00f0ff; }
   .ct-row:hover .ct-arrow { transform:translateX(4px); }
+  /* closing line: big Thai, the highlight shimmers cyan -> blue */
+  .ct-closing { margin-top:2.25rem; font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:800; font-size:clamp(24px,2.6vw,36px);
+    line-height:1.4; color:#F1F5F9; }
+  .ct-closing .st-hl { background-image:linear-gradient(90deg,#00f0ff,#0066ff,#38bdf8,#00f0ff); background-size:300% 100%;
+    animation:ctShimmer 5s linear infinite; }
+  @keyframes ctShimmer { to { background-position:300% 0; } }
+  .ct-sign { display:block; margin-top:.35rem; font-family:"JetBrains Mono",monospace; font-weight:500; font-size:13px; color:#64748B; }
+  @media (prefers-reduced-motion: reduce) { .ct-closing .st-hl { animation:none; } }
   /* your own comment on the project: set apart from the facts */
   .st-note { margin-top:1.75rem; padding:.1rem 0 .1rem 1rem; position:relative; }
   .st-note::before { content:""; position:absolute; left:0; top:0; bottom:0; width:2px; border-radius:2px;
@@ -551,6 +559,7 @@ const SITE = {
   contact: {
     headline: "Get in touch", highlight: "touch",
     body: "Happy to answer questions about my projects or walk through the code.",
+    closing: "ล้มแล้วลุก แต่ไม่ใช่ตุ๊กตา", closingHighlight: "ล้มแล้วลุก",   // last line of the site
     photo: "images/contact.png",   // transparent PNG shown on the left; "" = none
     photoAlt: "Ryu"
   }
@@ -847,6 +856,7 @@ function contactHTML(n) {
         <h2 class="ct-title">${rich(c.headline, c.highlight)}</h2>
         <p class="ct-body">${esc(c.body)}</p>
         <div class="ct-list">${rows}</div>
+        ${has(c.closing) ? `<p class="ct-closing">${rich(c.closing, c.closingHighlight)}<span class="ct-sign">— ${esc(SITE.name)}</span></p>` : ""}
       </div>
     </div>
   </section>`;
