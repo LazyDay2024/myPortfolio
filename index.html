@@ -12,6 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
+<!-- lets Three.js add-ons (SVGLoader) find "three"; same URL as the dynamic imports, so it loads once -->
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" } }</script>
+
 <!-- Tailwind (CDN) -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
@@ -142,6 +145,89 @@
   .cx-hint b { color:#00f0ff; font-weight:500; }
   .cx-hint.gone { opacity:0; }
 
+  /* hologram hero (HOLO): grid + a dotted globe in spinning rings, standing behind the photo */
+  #hero-wrap.holo-on #fibers { display:none; }
+  #hero-wrap.holo-on { background:radial-gradient(ellipse 60% 70% at 72% 48%, rgba(0,102,255,.16), transparent 70%), #05060c; }
+  .holo-grid { position:absolute; inset:0; pointer-events:none; opacity:.55;
+    background:linear-gradient(rgba(0,240,255,.06) 1px, transparent 1px) 0 0 / 44px 44px, linear-gradient(90deg, rgba(0,240,255,.06) 1px, transparent 1px) 0 0 / 44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse at 70% 50%, #000 15%, transparent 75%); mask-image:radial-gradient(ellipse at 70% 50%, #000 15%, transparent 75%); }
+  .holo-core { position:absolute; pointer-events:none; aspect-ratio:1; transform:translate(-50%, -50%); }
+  .holo-core svg, .holo-core canvas { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); }
+  .holo-core svg { width:100%; height:100%; overflow:visible; }
+  #hero-wrap .holo-core canvas { inset:auto; left:50%; top:50%; width:64%; height:64%; }   /* beats the full-cover "#hero-wrap canvas" rule */
+  .holo-r1 { animation:holoSpin 40s linear infinite; transform-origin:50% 50%; }
+  .holo-r2 { animation:holoSpin 24s linear infinite reverse; transform-origin:50% 50%; }
+  @keyframes holoSpin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .holo-r1, .holo-r2 { animation:none; } }
+
+  /* text animations on the frames (textFx). The resting state is always the plain, readable text. */
+  .fx-caret::after { content:""; display:inline-block; width:.45em; height:.95em; margin-left:2px; vertical-align:-.1em; background:#00f0ff; animation:blink 1s step-start infinite; }
+  .fx-w { display:inline-block; }
+  .st-hl .fx-w { background:inherit; -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .fx-words.fx-play .fx-w { animation:fxWord .7s cubic-bezier(.2,.7,.2,1) both; animation-delay:calc(var(--i) * 70ms); }
+  .fx-scan { position:relative; }
+  .fx-scan.fx-play { animation:fxScanClip 1.1s cubic-bezier(.6,0,.3,1) both; }
+  .fx-scan.fx-play::after { content:""; position:absolute; top:-4%; bottom:-4%; width:3px; background:#00f0ff; box-shadow:0 0 16px #00f0ff, 0 0 40px #0066ff; animation:fxScanBar 1.1s cubic-bezier(.6,0,.3,1) both; }
+  .st-hl.fx-shine { background-image:linear-gradient(100deg,#00f0ff 0%,#38bdf8 35%,#fff 50%,#38bdf8 65%,#0066ff 100%); background-size:250% 100%; animation:fxShine 1.5s ease-out both; }
+  .fx-flicker.fx-play { animation:fxFlick 1.6s linear both; }
+  .fx-glitch { position:relative; display:inline-block; }
+  .fx-glitch::before, .fx-glitch::after { content:attr(data-text); position:absolute; left:0; top:0; right:0; padding:inherit; opacity:0; pointer-events:none;
+    background:none; -webkit-background-clip:border-box; background-clip:border-box; filter:none; }
+  .fx-glitch::before { color:rgba(255,0,90,.75); } .fx-glitch::after { color:#00f0ff; }
+  .fx-glitch.fx-play { animation:fxJitter .9s steps(1) both; }
+  .fx-glitch.fx-play::before { animation:fxGlA .9s steps(1) both; } .fx-glitch.fx-play::after { animation:fxGlB .9s steps(1) both; }
+  .fx-lines.fx-play > * { animation:fxLine .5s ease-out both; animation-delay:calc(var(--i) * 140ms + .2s); }
+  /* a frame "arms" its text as it starts coming in: the animated parts wait hidden until their effect starts,
+     so the text doesn't show first and then animate again */
+  .fx-armed .fx-scan:not(.fx-play), .fx-armed .fx-flicker:not(.fx-play), .fx-armed .fx-glitch:not(.fx-play),
+  .fx-armed .fx-words:not(.fx-play) .fx-w, .fx-armed .fx-lines:not(.fx-play) > *, .fx-armed [data-fx-text]:not(.fx-typed) { opacity:0; }
+  @keyframes fxWord { from { opacity:0; transform:translateY(.55em); filter:blur(8px); } to { opacity:1; transform:none; filter:none; } }
+  @keyframes fxScanClip { from { clip-path:inset(-10% 100% -10% 0); } to { clip-path:inset(-10% -2% -10% 0); } }
+  @keyframes fxScanBar { from { left:0; opacity:1; } 85% { opacity:1; } to { left:100%; opacity:0; } }
+  @keyframes fxShine { from { background-position:100% 0; } to { background-position:0 0; } }
+  @keyframes fxFlick { 0% { opacity:0; } 8% { opacity:.8; } 12% { opacity:.1; } 20% { opacity:.9; } 24% { opacity:.3; } 40% { opacity:1; } 46% { opacity:.5; } 52%, 100% { opacity:1; } }
+  @keyframes fxJitter { 0% { transform:translate(2px,0); } 15% { transform:translate(-3px,1px); } 30% { transform:translate(1px,-1px); } 45% { transform:translate(-1px,0); } 60%, 100% { transform:none; } }
+  @keyframes fxGlA { 0% { opacity:1; transform:translate(-4px,0); clip-path:inset(10% 0 60% 0); } 20% { clip-path:inset(55% 0 20% 0); transform:translate(5px,0); } 40% { clip-path:inset(30% 0 45% 0); transform:translate(-3px,0); } 60% { clip-path:inset(70% 0 5% 0); transform:translate(2px,0); } 80%, 100% { opacity:0; } }
+  @keyframes fxGlB { 0% { opacity:1; transform:translate(4px,0); clip-path:inset(60% 0 15% 0); } 20% { clip-path:inset(5% 0 70% 0); transform:translate(-5px,0); } 40% { clip-path:inset(40% 0 35% 0); transform:translate(3px,0); } 60% { clip-path:inset(15% 0 65% 0); transform:translate(-2px,0); } 80%, 100% { opacity:0; } }
+  @keyframes fxLine { from { opacity:0; transform:translateX(-14px); filter:blur(4px); } to { opacity:1; transform:none; filter:none; } }
+  @media (prefers-reduced-motion: reduce) { [class*="fx-"], [class*="fx-"]::before, [class*="fx-"]::after, .fx-w, .fx-lines > * { animation:none !important; } }
+
+  /* frames: light-speed streaks for warp / dive */
+  .hs-warp { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; display:none; }
+
+  /* projects tunnel (TUNNEL): one WebGL tunnel behind all frames; project frames turn see-through and their
+     pictures hang in the tunnel instead of the tilted gallery */
+  #tun-gl { position:absolute; inset:0; width:100%; height:100%; z-index:0; display:none; }
+  html.tun-on .hs-panel.hs-proj { background:transparent; }
+  html.tun-on .hs-panel.hs-proj > .panel-bg, html.tun-on .hs-proj .st-gallery { display:none; }  /* the project text becomes a hologram panel too: angled toward you like a screen on a curved wall, tilting with
+     the pointer (--hx/--hy, set by the tunnel), floating, with scanlines, a light band, glowing edge and corner brackets */
+  html.tun-on .hs-proj .st-split { transform:perspective(1400px) rotateY(calc(12deg + var(--hx, 0) * 5deg)) rotateX(calc(var(--hy, 0) * -3deg));
+    transform-origin:0% 50%; transition:none; }   /* no scroll-reveal transition: the tilt changes every frame */
+  html.tun-on .hs-proj .st-text-col { position:relative; padding:1.25rem 1.5rem 1.4rem; border:1px solid rgba(0,240,255,.35); border-radius:.5rem;
+    background:linear-gradient(100deg, rgba(0,30,46,.86), rgba(3,14,24,.66) 70%, rgba(0,40,60,.5));
+    box-shadow:0 0 40px rgba(0,170,255,.18), inset 0 0 40px rgba(0,240,255,.07); }   /* no backdrop-filter: inside a 3D tilt it makes Chrome drop parts of the text */
+  html.tun-on .hs-proj.st-play .st-text-col, html.tun-on .hs-proj .st-play .st-text-col { animation:holoOn .9s steps(1) both, holoBob 6s ease-in-out 1s infinite; }
+  html.tun-on .hs-proj .st-text-col::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3; mix-blend-mode:screen;
+    background:linear-gradient(180deg, transparent 0%, rgba(0,240,255,.08) 46%, rgba(160,250,255,.16) 50%, transparent 54%) 0 0 / 100% 300% no-repeat,
+      repeating-linear-gradient(0deg, rgba(0,240,255,.05) 0 1px, transparent 1px 3px);
+    animation:holoBand 5.5s linear infinite; }
+  html.tun-on .hs-proj .st-text-col::after { content:""; position:absolute; inset:-5px; pointer-events:none; z-index:3;
+    background:linear-gradient(#00f0ff,#00f0ff) 0 0 / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 0 0 / 2px 22px no-repeat,
+      linear-gradient(#00f0ff,#00f0ff) 100% 0 / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 100% 0 / 2px 22px no-repeat,
+      linear-gradient(#00f0ff,#00f0ff) 0 100% / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 0 100% / 2px 22px no-repeat,
+      linear-gradient(#00f0ff,#00f0ff) 100% 100% / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 100% 100% / 2px 22px no-repeat;
+    filter:drop-shadow(0 0 6px rgba(0,240,255,.8)); }
+  html.tun-on .hs-proj .st-text-col :is(p, li, .st-sub) { text-shadow:0 0 14px rgba(0,200,255,.28); }
+  @keyframes holoOn { 0% { opacity:.1; } 12% { opacity:.85; } 20% { opacity:.25; } 32% { opacity:1; } 40% { opacity:.55; } 52%, 100% { opacity:1; } }
+  @keyframes holoBob { 50% { translate:0 -8px; } }
+  @keyframes holoBand { from { background-position:0 115%, 0 0; } to { background-position:0 -15%, 0 0; } }
+  @media (prefers-reduced-motion: reduce) { html.tun-on .hs-proj .st-text-col, html.tun-on .hs-proj .st-text-col::before { animation:none !important; } }
+  .tun-hint { position:absolute; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; pointer-events:none; white-space:nowrap;
+    font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-size:13px; line-height:1.5; color:#CBD5E1; padding:.35rem .9rem; border-radius:.35rem;
+    background:rgba(5,9,14,.75); border:1px solid rgba(0,240,255,.25); opacity:0; transition:opacity .4s; }
+  .tun-hint b { color:#00f0ff; font-weight:500; }
+  .tun-hint.on { opacity:1; }
+
   /* hero intro: lines slide up once on load */
   .intro > * { opacity:0; transform:translateY(18px); animation:introUp .8s cubic-bezier(.2,.7,.2,1) forwards; }
   .intro > *:nth-child(2){animation-delay:.12s} .intro > *:nth-child(3){animation-delay:.24s}
@@ -188,8 +274,22 @@
   html.hs-on.hs-snapping { scroll-snap-type:y proximity; }
 
   /* hero: Thai name + tagline */
-  .hero-thai { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:600; font-size:clamp(22px,2.6vw,32px); line-height:1.4; color:#F1F5F9; }
-  .hero-tag { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:700; font-size:clamp(18px,2vw,24px); line-height:1.5; }
+  .hero-thai { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:600; font-size:clamp(30px,5vw,76px); line-height:1.35; color:#F1F5F9; }
+  .hero-tag { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:700; font-size:clamp(26px,4vw,62px); line-height:1.4; }
+  /* big name: fills the left half of the first screen (beats the Tailwind text-hero-name sizes) */
+  #hero h1 { font-size:clamp(84px,15vw,240px); line-height:.95; letter-spacing:-0.04em; margin-bottom:clamp(.75rem,1.6vw,1.5rem); }
+
+  /* hero: tech-stack logos orbiting the photo (STACK). Two canvases sized to the orbit: one behind the photo
+     (back half of the ring), one in front of it (front half). #hero-wrap canvas.stk-gl beats "#hero-wrap canvas" */
+  #hero-wrap canvas.stk-gl { inset:auto; pointer-events:none; opacity:0; transition:opacity .8s ease; }
+  #hero-wrap canvas.stk-gl.on { opacity:1; }
+  /* front half crosses the white shirt, where additive light alone vanishes: thin dark halo + cyan glow */
+  #hero-wrap .hero-photo + canvas.stk-gl { filter:drop-shadow(0 0 1.5px rgba(0,18,32,.95)) drop-shadow(0 0 8px rgba(0,200,255,.35)); }
+  #hero-wrap .stk-tip { position:absolute; z-index:3; left:0; top:0; transform:translate(-50%,4px); white-space:nowrap; pointer-events:none;
+    font-family:"JetBrains Mono",monospace; font-size:12px; color:#d6fbff; letter-spacing:.04em; padding:3px 8px;
+    border:1px solid rgba(0,240,255,.45); background:rgba(5,16,24,.72); box-shadow:0 0 14px rgba(0,240,255,.25);
+    text-shadow:0 0 8px rgba(0,240,255,.7); opacity:0; transition:opacity .2s, transform .2s; }
+  #hero-wrap .stk-tip.on { opacity:1; transform:translate(-50%,0); }
 
   /* story frames */
   .story { text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; }
@@ -297,6 +397,34 @@
   .ct-list { margin-top:2.25rem; border-top:1px solid rgba(148,163,184,.14); }
   .ct-row { position:relative; display:flex; align-items:center; gap:1.1rem; padding:1rem .25rem;
     border-bottom:1px solid rgba(148,163,184,.14); transition:padding .25s ease; }
+  .ct-link { display:flex; align-items:center; gap:1.1rem; flex:1; min-width:0; }
+  /* hologram contact: terminal box around the rows, copy buttons, rings + scan line on the photo */
+  .ct-term { margin-top:1.4rem; border:1px solid rgba(0,240,255,.3); border-radius:.6rem; overflow:hidden;
+    background:rgba(5,9,14,.82); box-shadow:0 0 30px rgba(0,170,255,.12); }
+  .ct-term-top { display:flex; align-items:center; gap:6px; padding:.45rem .9rem; border-bottom:1px solid rgba(0,240,255,.14);
+    font-family:"JetBrains Mono",monospace; font-size:12px; color:#64748B; }
+  .ct-term-top i { width:9px; height:9px; border-radius:50%; border:1px solid rgba(0,240,255,.4); }
+  .ct-term-top span { margin-left:.5rem; }
+  .ct-cmd { padding:.6rem 1rem 0; font-family:"JetBrains Mono",monospace; font-size:14px; color:#CBD5E1; }
+  .ct-prompt { color:#00f0ff; }
+  .ct-term .ct-list { margin-top:0; border-top:0; padding:0 .75rem .25rem; }
+  .ct-term .ct-row { padding:.7rem .25rem; }
+  .ct-term .ct-row:last-child { border-bottom:0; }
+  .ct-copy { flex:none; display:inline-flex; align-items:center; gap:.35rem; min-height:36px; padding:0 .7rem; border-radius:.35rem;
+    font-family:"Noto Sans Thai","Inter",sans-serif; font-size:13px; color:#94A3B8; border:1px solid rgba(0,240,255,.22); background:rgba(0,240,255,.04);
+    transition:color .2s, border-color .2s, box-shadow .2s; }
+  .ct-copy:hover, .ct-copy.done { color:#00f0ff; border-color:#00f0ff; box-shadow:0 0 14px rgba(0,240,255,.3); }
+  .ct-copy:focus-visible, .ct-link:focus-visible { outline:2px solid #00f0ff; outline-offset:2px; }
+  .ct-photo { position:relative; }
+  .ct-photo img { position:relative; z-index:1; }
+  .ct-holo { position:absolute; left:50%; top:42%; width:min(92%, 520px); aspect-ratio:1; height:auto; transform:translate(-50%,-50%); z-index:0; pointer-events:none; overflow:visible; }
+  /* scan line over the photo, cut to the person's own shape (the PNG's transparency is the mask) */
+  .ct-photo::after { content:""; position:absolute; inset:0; z-index:2; pointer-events:none; mix-blend-mode:screen;
+    background:linear-gradient(180deg, transparent 0%, rgba(0,240,255,.14) 7%, rgba(224,253,255,.45) 9.5%, transparent 10%) 0 0 / 100% 300% no-repeat;
+    -webkit-mask:var(--ct-photo) center top / auto 100% no-repeat; mask:var(--ct-photo) center top / auto 100% no-repeat;
+    animation:ctScan 5s linear infinite; }
+  @keyframes ctScan { 0% { background-position:0 18%; } 60%, 100% { background-position:0 -42%; } }   /* band from just above the photo to just below it, then a pause */
+  @media (prefers-reduced-motion: reduce) { .ct-photo::after { animation:none; display:none; } }
   .ct-row::after { content:""; position:absolute; left:0; bottom:-1px; height:1px; width:0; transition:width .35s ease;
     background:linear-gradient(90deg,#00f0ff,#0066ff); box-shadow:0 0 10px rgba(0,240,255,.6); }
   .ct-row:hover { padding-left:.75rem; }
@@ -412,6 +540,7 @@ const SITE = {
   fullName: "นิธิศ ทองขาว",
   tagline: "ผู้ล้มแล้วลุก",
   heroPhoto: "images/me.png",   // your photo on the right of the first screen (transparent PNG); "" = none
+  heroGithub: false,            // GitHub button under the name on the first screen (GitHub stays in the header and Contact)
 
   /* Story frames right after the hero, one full screen each, in order.
      kind: "title"   -> huge line in the middle of the screen (muted: true = grey)
@@ -644,9 +773,9 @@ const FIBERS = {
    Every project frame in the story is a chip (click = go to that frame). Drag = turn the board (springs back),
    click the board = ripple of current, PWR switch = power on/off, click an LED = next colour.
    Screens narrower than minWidth (phones), or if Three.js can't load, get FIBERS instead.
-   enabled: false -> FIBERS everywhere. */
+   enabled: false -> FIBERS everywhere. Currently off: HOLO below replaced it (set true to bring the board back). */
 const CIRCUIT = {
-  enabled: true, minWidth: 1024,
+  enabled: false, minWidth: 1024,
   three: "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
   seed: 7,                    // same seed = same board every visit; change it for a different layout
   tilt: 52, fov: 38,          // how far the board leans back (degrees), camera lens
@@ -660,6 +789,58 @@ const CIRCUIT = {
   ledColors: ["#00f0ff", "#0066ff", "#38bdf8", "#e0fdff"],
   hint: "ลากเพื่อหมุนบอร์ด · คลิกชิปเพื่อดูโปรเจกต์ · กดสวิตช์ PWR",
   dpr: 1.5, fps: 60
+};
+/* Hologram look (Iron Man style).
+   hero:   holographic globe in spinning rings standing behind your photo (all screen sizes; replaces FIBERS).
+   textFx: text animations on the frames, picked per frame type (see textFx() for the rules). A story item can
+           override its own with  fx: "scan" | "words" | "flicker" | "glitch" | "type" | "none".
+   enabled: false -> old hero background (CIRCUIT or FIBERS) and no text animations. */
+const HOLO = { enabled: true, hero: true, textFx: true };
+/* Tech-stack logos orbiting your photo on the first screen, like a hologram ring. Each logo is a light-cyan 3D mesh
+   (Three.js, all screen sizes): see-through faces + faint wireframe + glowing edges. The front half of the ring passes
+   in front of the photo, the back half goes behind it. Hover (tap on phones) = the ring stops, that logo spins and
+   shows its name. Shapes come from STACK_ICONS below (Simple Icons CC0, C# from Devicon MIT).
+   logos: order round the ring, icon = key in STACK_ICONS, label = text shown on hover.
+   enabled: false -> no logos (also none if Three.js can't load; screen readers still get the list). */
+const STACK = {
+  enabled: true,
+  logos: [
+    { icon: "csharp",     label: "C#" },
+    { icon: "n8n",        label: "n8n · Automation" },
+    { icon: "claude",     label: "Claude · AI" },
+    { icon: "github",     label: "GitHub" },
+    { icon: "cplusplus",  label: "C++" },
+    { icon: "python",     label: "Python" },
+    { icon: "html5",      label: "HTML5 · Web" },
+    { icon: "javascript", label: "JavaScript · Web" },
+    { icon: "unity",      label: "Unity · Game Dev" },
+    { icon: "arduino",    label: "Arduino · IoT" }
+  ],
+  speed: 0.14,                        // orbit speed (radians per second; one lap ≈ 45s)
+  radius: 0.72,                       // orbit width as a share of the photo width (shrinks on narrow screens)
+  height: 0.5,                        // orbit centre: share of the photo height from its top (0.5 = chest)
+  tilt: 0.3,                          // how much the ring leans toward you (radians): front half lower, back half higher
+  size: 0.085,                        // logo size as a share of the photo height
+  ring: 0.22,                         // orbit line strength (0 = no line)
+  color: "#8eeaff", edge: "#d6fbff",   // face colour, edge colour
+  fill: 0.2, wire: 0.16,              // how strong the see-through faces / the wireframe are (0..1)
+  depth: 0.22,                        // thickness of each logo (share of its size)
+  sway: 0.5,                          // how far the logos turn back and forth (radians)
+  three: "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  svgLoader: "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/SVGLoader.js",
+  dpr: 1.5
+};
+/* Projects tunnel (frames mode = wide screens only). Every "project" frame dives into one 3D tunnel: the
+   frame's gallery pictures hang inside it and tumble into view as you fly past (scroll = fly). At the end of a
+   project, scrolling again moves on to the next frame. Two project frames in a row = keep flying (transition "fly").
+   mode: how the pictures turn as you pass: 1 tumble, 2 spiral, 3 flip, 4 fan.  style: "grid" or "rings" (tunnel wall).
+   enabled: false -> project frames keep the tilted gallery. */
+const TUNNEL = {
+  enabled: true, mode: 1, style: "grid",
+  three: "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  hint: "<b>//</b> เลื่อนเพื่อบินผ่านภาพผลงาน · คลิกภาพเพื่อขยาย",
+  hintEnd: "<b>//</b> เลื่อนต่อเพื่อไปต่อ ↓",
+  dpr: 1.5
 };
 /* Moving grid behind every frame except the first. Same setting names as the React "ShapeGrid" props.
    direction: up, down, left, right, diagonal.  fadeTo: colour the edges fade into (page background).
@@ -697,6 +878,16 @@ const BORDER_GLOW = {
      "cube"   - the page turns like a cube to the next face
      "split"  - next frame opens from a glowing line in the middle, like a screen switching on
      "glitch" - digital glitch: torn bands, colour split, then the next frame snaps in
+   Camera moves (hologram look):
+     "warp"   - jump to light speed: streaks fly out of the centre, the old frame stretches away
+     "dolly"  - the camera flies forward through the old frame toward the next one, deeper in
+     "crane"  - the camera sinks: the old frame rises out of view, the next comes up from below
+     "lift"   - the camera rises: the old frame drops out of view, the next comes down from above
+     "roll"   - barrel roll with a zoom
+     "orbit"  - the camera circles round the scene to the next frame at the side
+     "swing"  - pull back and pan to the next screen on a curved wall
+     "dive"   - dive into the centre of the screen (used to enter the projects tunnel)
+     "fly"    - project -> project: keep flying through the tunnel
    scrollPerFrame: scrolling (in screen heights) per frame. hold: part of each gap where the
    frame stays still before/after the transition (0 to 0.4, ignored in stepMode).
    stepMode: true  -> one flick of the wheel / arrow key / swipe = go to the next frame and
@@ -706,12 +897,41 @@ const BORDER_GLOW = {
    counts as "go next" (lower = more sensitive). */
 const FRAMES = {
   enabled: true, minWidth: 1024, minHeight: 600,
-  transitions: ["zoom", "slide", "fade", "drop", "iris", "expand", "glitch", "expand", "fade", "zoomout", "iris", "expand",
-                "glitch", "cover", "cube", "split"],
+  // one per gap, matched to the story: sinks on "หมดไฟ", rises on "ลุก", glitches on "Dek70", dives into every project
+  transitions: ["warp",     // hero -> ทำไมถึง "ล้มแล้วลุก"
+                "dolly",    // -> 5 ค่าย ถูกปฏิเสธ
+                "crane",    // -> ผมหมดไฟ... (the camera sinks)
+                "lift",     // -> แล้วลุกยังไงล่ะ? (the camera rises)
+                "dolly",    // -> ใครสักคน
+                "dive",     // -> LetMeLearn (into the tunnel)
+                "warp",     // -> ฉ่ำเรื่อง API (out of the tunnel)
+                "dive",     // -> Budget-Bot
+                "swing",    // -> ไร้จุดหมาย (drifting)
+                "zoomout",  // -> จนกระทั่ง...
+                "glitch",   // -> Dek70 ss2 (the spark)
+                "dive",     // -> SendThemCool
+                "fly",      // -> Against All Odds (keep flying)
+                "warp",     // -> Contact
+                "dive",     // -> DrowzyDetector
+                "fly"],     // -> หุ่นยนต์ผสม
   scrollPerFrame: 1.3, hold: 0.15, snap: true,
   stepMode: true, stepDuration: 900, stepThreshold: 20
 };
 /* ===================== end of editable block ===================== */
+
+/* logo shapes for STACK: vb = viewBox size, d = SVG path. Simple Icons (CC0); csharp from Devicon (MIT) */
+const STACK_ICONS = {
+  csharp: { vb: 128, d: "M117.5 33.5l.3-.2c-.6-1.1-1.5-2.1-2.4-2.6L67.1 2.9c-.8-.5-1.9-.7-3.1-.7-1.2 0-2.3.3-3.1.7l-48 27.9c-1.7 1-2.9 3.5-2.9 5.4v55.7c0 1.1.2 2.3.9 3.4l-.2.1c.5.8 1.2 1.5 1.9 1.9l48.2 27.9c.8.5 1.9.7 3.1.7 1.2 0 2.3-.3 3.1-.7l48-27.9c1.7-1 2.9-3.5 2.9-5.4V36.1c.1-.8 0-1.7-.4-2.6zm-53.5 70c-21.8 0-39.5-17.7-39.5-39.5S42.2 24.5 64 24.5c14.7 0 27.5 8.1 34.3 20l-13 7.5C81.1 44.5 73.1 39.5 64 39.5c-13.5 0-24.5 11-24.5 24.5s11 24.5 24.5 24.5c9.1 0 17.1-5 21.3-12.4l12.9 7.6c-6.8 11.8-19.6 19.8-34.2 19.8zM115 62h-3.2l-.9 4h4.1v5h-5l-1.2 6h-4.9l1.2-6h-3.8l-1.2 6h-4.8l1.2-6H94v-5h3.5l.9-4H94v-5h5.3l1.2-6h4.9l-1.2 6h3.8l1.2-6h4.8l-1.2 6h2.2v5zm-12.7 4h3.8l.9-4h-3.8z" },
+  n8n: { vb: 24, d: "M21.4737 5.6842c-1.1772 0-2.1663.8051-2.4468 1.8947h-2.8955c-1.235 0-2.289.893-2.492 2.111l-.1038.623a1.263 1.263 0 0 1-1.246 1.0555H11.289c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947s-2.1663.8051-2.4467 1.8947H4.973c-.2805-1.0896-1.2696-1.8947-2.4468-1.8947C1.1311 9.4737 0 10.6047 0 12s1.131 2.5263 2.5263 2.5263c1.1772 0 2.1663-.8051 2.4468-1.8947h1.4223c.2804 1.0896 1.2696 1.8947 2.4467 1.8947 1.1772 0 2.1663-.8051 2.4468-1.8947h1.0008a1.263 1.263 0 0 1 1.2459 1.0555l.1038.623c.203 1.218 1.257 2.111 2.492 2.111h.3692c.2804 1.0895 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263c-1.1772 0-2.1664.805-2.4468 1.8947h-.3692a1.263 1.263 0 0 1-1.246-1.0555l-.1037-.623A2.52 2.52 0 0 0 13.9607 12a2.52 2.52 0 0 0 .821-1.4794l.1038-.623a1.263 1.263 0 0 1 1.2459-1.0555h2.8955c.2805 1.0896 1.2696 1.8947 2.4468 1.8947 1.3952 0 2.5263-1.131 2.5263-2.5263s-1.131-2.5263-2.5263-2.5263m0 1.2632a1.263 1.263 0 0 1 1.2631 1.2631 1.263 1.263 0 0 1-1.2631 1.2632 1.263 1.263 0 0 1-1.2632-1.2632 1.263 1.263 0 0 1 1.2632-1.2631M2.5263 10.7368A1.263 1.263 0 0 1 3.7895 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 1.2632 12a1.263 1.263 0 0 1 1.2631-1.2632m6.3158 0A1.263 1.263 0 0 1 10.1053 12a1.263 1.263 0 0 1-1.2632 1.2632A1.263 1.263 0 0 1 7.579 12a1.263 1.263 0 0 1 1.2632-1.2632m10.1053 3.7895a1.263 1.263 0 0 1 1.2631 1.2632 1.263 1.263 0 0 1-1.2631 1.2631 1.263 1.263 0 0 1-1.2632-1.2631 1.263 1.263 0 0 1 1.2632-1.2632" },
+  claude: { vb: 24, d: "m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z" },
+  github: { vb: 24, d: "M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" },
+  cplusplus: { vb: 24, d: "M22.394 6c-.167-.29-.398-.543-.652-.69L12.926.22c-.509-.294-1.34-.294-1.848 0L2.26 5.31c-.508.293-.923 1.013-.923 1.6v10.18c0 .294.104.62.271.91.167.29.398.543.652.69l8.816 5.09c.508.293 1.34.293 1.848 0l8.816-5.09c.254-.147.485-.4.652-.69.167-.29.27-.616.27-.91V6.91c.003-.294-.1-.62-.268-.91zM12 19.11c-3.92 0-7.109-3.19-7.109-7.11 0-3.92 3.19-7.11 7.11-7.11a7.133 7.133 0 016.156 3.553l-3.076 1.78a3.567 3.567 0 00-3.08-1.78A3.56 3.56 0 008.444 12 3.56 3.56 0 0012 15.555a3.57 3.57 0 003.08-1.778l3.078 1.78A7.135 7.135 0 0112 19.11zm7.11-6.715h-.79v.79h-.79v-.79h-.79v-.79h.79v-.79h.79v.79h.79zm2.962 0h-.79v.79h-.79v-.79h-.79v-.79h.79v-.79h.79v.79h.79z" },
+  python: { vb: 24, d: "M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z" },
+  html5: { vb: 24, d: "M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z" },
+  javascript: { vb: 24, d: "M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z" },
+  unity: { vb: 24, d: "m12.9288 4.2939 3.7997 2.1929c.1366.077.1415.2905 0 .3675l-4.515 2.6076a.4192.4192 0 0 1-.4246 0L7.274 6.8543c-.139-.0745-.1415-.293 0-.3675l3.7972-2.193V0L1.3758 5.5977V16.793l3.7177-2.1456v-4.3858c-.0025-.1565.1813-.2682.318-.1838l4.5148 2.6076a.4252.4252 0 0 1 .2136.3676v5.2127c.0025.1565-.1813.2682-.3179.1838l-3.7996-2.1929-3.7178 2.1457L12 24l9.6954-5.5977-3.7178-2.1457-3.7996 2.1929c-.1341.082-.3229-.0248-.3179-.1838V13.053c0-.1565.087-.2956.2136-.3676l4.5149-2.6076c.134-.082.3228.0224.3179.1838v4.3858l3.7177 2.1456V5.5977L12.9288 0Z" },
+  arduino: { vb: 24, d: "M18.087 6.146c-.3 0-.607.017-.907.069-2.532.367-4.23 2.239-5.18 3.674-.95-1.435-2.648-3.307-5.18-3.674a6.49 6.49 0 0 0-.907-.069C2.648 6.146 0 8.77 0 12s2.656 5.854 5.913 5.854c.3 0 .607-.017.916-.069 2.531-.376 4.23-2.247 5.18-3.683.949 1.436 2.647 3.307 5.18 3.683.299.043.607.069.915.069C21.344 17.854 24 15.23 24 12s-2.656-5.854-5.913-5.854zM6.53 15.734a3.837 3.837 0 0 1-.625.043c-2.148 0-3.889-1.7-3.889-3.777 0-2.085 1.749-3.777 3.898-3.777.208 0 .416.017.624.043 2.39.35 3.847 2.768 4.347 3.734-.508.974-1.974 3.384-4.355 3.734zm11.558.043c-.208 0-.416-.017-.624-.043-2.39-.35-3.856-2.768-4.347-3.734.491-.966 1.957-3.384 4.347-3.734.208-.026.416-.043.624-.043 2.149 0 3.89 1.7 3.89 3.777 0 2.085-1.75 3.777-3.89 3.777zm1.65-4.404v1.134h-1.205v1.182h-1.156v-1.182H16.17v-1.134h1.206V10.19h1.156v1.183h1.206zM4.246 12.498H7.82v-1.125H4.245v1.125z" }
+};
 
 
 /* ---------- renderer (no need to edit below) ---------- */
@@ -745,10 +965,17 @@ function heroHTML() {
     <h1 class="font-hero-name-mobile text-hero-name-mobile md:font-hero-name md:text-hero-name text-text-primary uppercase mb-4 md:mb-5 tracking-tighter">${esc(SITE.name)}</h1>
     ${has(SITE.fullName) ? `<p class="hero-thai">${esc(SITE.fullName)}</p>` : ""}
     <p class="hero-tag"><span class="st-hl">${esc(SITE.tagline)}</span></p>
-    ${has(L.github) ? `<div class="flex flex-wrap items-center gap-4 mt-8">
+    ${stackHTML()}
+    ${SITE.heroGithub && has(L.github) ? `<div class="flex flex-wrap items-center gap-4 mt-8">
       <a class="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-DEFAULT border border-border-subtle hover:border-primary-container hover:text-primary-container hover:bg-primary-container/5 text-text-primary font-label-mono text-label-mono transition-all duration-150 active:scale-95" href="${esc(L.github)}"${ext(L.github)}><span>GitHub</span><span class="text-xs">↗</span></a>
     </div>` : ""}
   </section>`;
+}
+
+// tech-stack list for screen readers (STACK); the logos themselves are drawn by heroStack() round the photo
+function stackHTML() {
+  const list = STACK.enabled ? STACK.logos.filter((l) => STACK_ICONS[l.icon]) : [];
+  return list.length ? `<ul class="sr-only" aria-label="Tech stack">${list.map((l) => `<li>${esc(l.label)}</li>`).join("")}</ul>` : "";
 }
 
 // escape, turn "\n" into <br>, wrap the highlight part in the gradient span
@@ -805,7 +1032,7 @@ function storyHTML(list = SITE.story, prefix = "story") {
     } else {
       body = `<p class="st-text${s.muted ? " muted" : ""}">${rich(s.text, s.highlight)}</p>`;
     }
-    return `<section class="story" id="${prefix}-${i + 1}">${GRID_BG}<div class="st-wrap">${body}</div></section>`;
+    return `<section class="story${s.kind === "project" ? " is-project" : ""}" id="${prefix}-${i + 1}"${has(s.fx) ? ` data-fx="${esc(s.fx)}"` : ""}>${GRID_BG}<div class="st-wrap">${body}</div></section>`;
   }).join("");
 }
 
@@ -927,22 +1154,36 @@ function contactHTML(n) {
     has(L.github) && { href: L.github, ic: githubIcon(), label: "GitHub", value: L.github.replace(/^https?:\/\/(www\.)?github\.com\//, "").replace(/\/$/, "") },
     has(L.linkedin) && { href: L.linkedin, ic: icon("work", 22), label: "LinkedIn", value: "LinkedIn" }
   ].filter(Boolean);
+  // email and phone get a copy button (mailto/tel links don't work everywhere, e.g. a desktop with no mail app)
+  const copyable = { Email: L.email, Phone: L.phone };
   const rows = items.map((it) => `
-    <a class="ct-row" href="${esc(it.href)}"${ext(it.href)}>
-      <span class="ct-icon">${it.ic}</span>
-      <span class="min-w-0"><span class="ct-label">${esc(it.label)}</span><span class="ct-value">${esc(it.value)}</span></span>
-      <span class="ct-arrow" aria-hidden="true">→</span>
-    </a>`).join("");
+    <div class="ct-row">
+      <a class="ct-link" href="${esc(it.href)}"${ext(it.href)}>
+        <span class="ct-icon">${it.ic}</span>
+        <span class="min-w-0"><span class="ct-label">${esc(it.label)}</span><span class="ct-value">${esc(it.value)}</span></span>
+        <span class="ct-arrow" aria-hidden="true">→</span>
+      </a>
+      ${has(copyable[it.label]) ? `<button class="ct-copy" type="button" data-copy="${esc(copyable[it.label])}" aria-label="คัดลอก ${esc(it.label)}">${icon("content_copy", 18)}<span>คัดลอก</span></button>` : ""}
+    </div>`).join("");
+  // hologram rings standing behind the photo (same look as the hero globe)
+  const rings = `<svg class="ct-holo" viewBox="0 0 200 200" aria-hidden="true">
+      <g class="holo-r1"><circle cx="100" cy="100" r="96" fill="none" stroke="rgba(0,240,255,.45)" stroke-width="1" stroke-dasharray="40 14 4 14"/></g>
+      <g class="holo-r2"><circle cx="100" cy="100" r="84" fill="none" stroke="rgba(0,102,255,.75)" stroke-width="3" stroke-dasharray="2 5"/></g>
+      <circle cx="100" cy="100" r="74" fill="none" stroke="rgba(0,240,255,.22)" stroke-width=".6"/></svg>`;
   return `
   <section class="ct-section" id="contact">
     ${GRID_BG}
     <div class="ct-layout">
-      ${has(c.photo) ? `<div class="ct-photo"><img src="${esc(c.photo)}" alt="${esc(c.photoAlt)}" onerror="this.parentNode.remove()"></div>` : ""}
-      <div>
+      ${has(c.photo) ? `<div class="ct-photo" style="--ct-photo:url('${esc(c.photo)}')">${HOLO.enabled ? rings : ""}<img src="${esc(c.photo)}" alt="${esc(c.photoAlt)}" onerror="this.parentNode.remove()"></div>` : ""}
+      <div class="min-w-0">
         <span class="ct-eyebrow">${String(n).padStart(2, "0")} // contact</span>
         <h2 class="ct-title">${rich(c.headline, c.highlight)}</h2>
         <p class="ct-body">${esc(c.body)}</p>
-        <div class="ct-list">${rows}</div>
+        <div class="ct-term">
+          <div class="ct-term-top" aria-hidden="true"><i></i><i></i><i></i><span>~/contact</span></div>
+          <p class="ct-cmd" aria-hidden="true"><span class="ct-prompt">ryu@portfolio:~$</span> <span class="ct-cmd-text">contact --list</span></p>
+          <div class="ct-list">${rows}</div>
+        </div>
         ${has(c.closing) ? `<p class="ct-closing">${rich(c.closing, c.closingHighlight)}<span class="ct-sign">— ${esc(SITE.name)}</span></p>` : ""}
       </div>
     </div>
@@ -1550,9 +1791,313 @@ async function circuitHero(wrap, o, fallback) {
   }, 200); });
 }
 
-if (CIRCUIT.enabled && innerWidth >= CIRCUIT.minWidth)
+/* ---------- hologram hero: a dotted globe in spinning rings, standing behind the photo ----------
+   Plain 2D canvas (cheap enough for phones). Pauses while the hero is off screen. */
+function holoHero(wrap) {
+  wrap.classList.add("holo-on");
+  const grid = document.createElement("div"); grid.className = "holo-grid"; grid.setAttribute("aria-hidden", "true");
+  const core = document.createElement("div"); core.className = "holo-core"; core.setAttribute("aria-hidden", "true");
+  core.innerHTML = `<svg viewBox="0 0 200 200">
+      <g class="holo-r1"><circle cx="100" cy="100" r="96" fill="none" stroke="rgba(0,240,255,.5)" stroke-width="1" stroke-dasharray="40 14 4 14"/></g>
+      <g class="holo-r2"><circle cx="100" cy="100" r="86" fill="none" stroke="rgba(0,102,255,.8)" stroke-width="3" stroke-dasharray="2 5"/></g>
+      <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(0,240,255,.25)" stroke-width=".6"/></svg><canvas></canvas>`;
+  wrap.querySelector(".fade").before(grid, core);
+  const canvas = core.querySelector("canvas"), g = canvas.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+  const photo = wrap.querySelector(".hero-photo");
+  // centred on the photo at head height; without a photo, on the right
+  const place = () => {
+    const w = wrap.getBoundingClientRect(), r = photo && photo.getBoundingClientRect();
+    const ok = r && r.width > 0, size = Math.min((ok ? r.height : w.height) * 0.82, 760);
+    Object.assign(core.style, { width: size + "px",
+      left: (ok ? r.left - w.left + r.width / 2 : w.width * 0.72) + "px", top: (ok ? r.top - w.top + r.height * 0.42 : w.height * 0.5) + "px" });
+    canvas.width = canvas.height = Math.max(1, Math.round(size * 0.64 * dpr));
+  };
+  // points on a sphere; "land" is a few overlapping sine waves (decoration, not a real map)
+  const pts = [];
+  for (let i = 0, M = 1100; i < M; i++) {
+    const y = 1 - (i + 0.5) / M * 2, rr = Math.sqrt(1 - y * y), th = i * 2.399963, x = Math.cos(th) * rr, z = Math.sin(th) * rr;
+    const lat = Math.asin(y), lon = Math.atan2(z, x);
+    pts.push([x, y, z, Math.sin(lon * 2 + 1.3) * Math.cos(lat * 1.6) + 0.55 * Math.sin(lon * 5 + lat * 3) + 0.35 * Math.cos(lat * 7 - lon * 3) > 0.45]);
+  }
+  let t = 0;
+  const draw = () => {
+    const w = canvas.width, r = w * 0.45, o = w / 2, a = t * 0.15, ca = Math.cos(a), sa = Math.sin(a), cp = Math.cos(0.4), sp = Math.sin(0.4);
+    g.clearRect(0, 0, w, w);
+    const glow = g.createRadialGradient(o, o, r * 0.1, o, o, r * 1.1);
+    glow.addColorStop(0, "rgba(0,240,255,.2)"); glow.addColorStop(0.8, "rgba(0,102,255,.1)"); glow.addColorStop(1, "rgba(0,102,255,0)");
+    g.fillStyle = glow; g.beginPath(); g.arc(o, o, r * 1.1, 0, Math.PI * 2); g.fill();
+    for (const [x, y, z, land] of pts) {
+      const x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+      if (z2 < 0 && !land) continue;
+      const s = (land ? 2.1 : 1.2) * dpr * (z2 > 0 ? 1 : 0.7);
+      g.fillStyle = land ? `rgba(170,250,255,${z2 > 0 ? 0.95 : 0.14})` : "rgba(0,200,255,.25)";
+      g.fillRect(o + x1 * r - s / 2, o - y2 * r - s / 2, s, s);
+    }
+    g.lineWidth = dpr; g.strokeStyle = "rgba(0,240,255,.6)"; g.beginPath(); g.arc(o, o, r, 0, Math.PI * 2); g.stroke();
+  };
+  place(); draw();
+  if (photo) photo.addEventListener("load", () => { place(); draw(); });
+  addEventListener("load", () => { place(); draw(); });
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { place(); draw(); }, 150); });
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let on = true, prev = performance.now();
+  new IntersectionObserver(([e]) => { on = e.isIntersecting; }).observe(wrap);
+  const loop = (now) => {
+    requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
+    const pn = wrap.closest(".hs-panel"); if (!on || (pn && pn.classList.contains("hs-off"))) return;
+    t += dt; draw();
+  };
+  requestAnimationFrame(loop);
+}
+
+if (HOLO.enabled && HOLO.hero) { try { holoHero(document.getElementById("hero-wrap")); } catch (e) { console.error("[holo]", e); startFibers(); } }
+else if (CIRCUIT.enabled && innerWidth >= CIRCUIT.minWidth)
   circuitHero(document.getElementById("hero-wrap"), CIRCUIT, startFibers).catch((e) => { console.error("[circuit]", e); startFibers(); });
 else startFibers();
+
+/* ---------- tech-stack logos orbiting the photo (STACK) ----------
+   Each SVG logo is extruded and drawn three times: see-through faces, a faint wireframe and glowing edges (all
+   additive, so they read as light). One scene, two canvases sized to the orbit: the back half of the ring is drawn
+   on the canvas behind the photo, the front half on the one in front of it, so the logos really go round you.
+   The world origin is the orbit centre and 1 unit = 1 css px on the z = 0 plane. Hover / tap is a hit test on the
+   projected logo positions (the canvases themselves ignore the pointer, so the hero text stays clickable). */
+async function heroStack(o) {
+  const wrap = document.getElementById("hero-wrap"), photo = wrap.querySelector(".hero-photo");
+  const list = o.logos.filter((l) => STACK_ICONS[l.icon]); if (!list.length) return;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [THREE, { SVGLoader }] = await Promise.all([import(o.three), import(o.svgLoader)]);
+  THREE.ColorManagement.enabled = false;
+  const mk = () => { const c = document.createElement("canvas"); c.className = "stk-gl"; c.setAttribute("aria-hidden", "true"); return c; };
+  const back = mk(), front = mk();
+  if (photo) { photo.before(back); photo.after(front); } else wrap.querySelector(".fade").after(back, front);
+  const tip = document.createElement("div"); tip.className = "stk-tip"; tip.setAttribute("aria-hidden", "true"); wrap.append(tip);
+  const ren = [back, front].map((canvas) => {
+    const r = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    r.setPixelRatio(Math.min(o.dpr, devicePixelRatio || 1)); r.outputColorSpace = THREE.LinearSRGBColorSpace; return r;
+  });
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(30, 1, 1, 5000), loader = new SVGLoader();
+  const glow = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  const base = [o.fill, o.wire, 0.95];
+  let t = performance.now() / 1000;   // page time, so the logos boot in right after the tagline (~1.6s)
+  const logos = list.map((l, i) => {
+    const ic = STACK_ICONS[l.icon];
+    const data = loader.parse(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ic.vb} ${ic.vb}"><path d="${ic.d}"/></svg>`);
+    const geo = new THREE.ExtrudeGeometry(data.paths.flatMap((p) => SVGLoader.createShapes(p)), { depth: ic.vb * o.depth, bevelEnabled: false, curveSegments: 8 });
+    geo.computeBoundingBox();
+    const b = geo.boundingBox, s = 1 / Math.max(b.max.x - b.min.x, b.max.y - b.min.y);
+    geo.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2);
+    geo.scale(s, -s, s);   // SVG y points down
+    const mats = [new THREE.MeshBasicMaterial({ ...glow, color: o.color, side: THREE.DoubleSide }),
+                  new THREE.LineBasicMaterial({ ...glow, color: o.color }), new THREE.LineBasicMaterial({ ...glow, color: o.edge })];
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(geo, mats[0]), new THREE.LineSegments(new THREE.WireframeGeometry(geo), mats[1]),
+          new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), mats[2]));
+    scene.add(g);
+    return { g, mats, i, label: l.label, hot: 0, spinAt: -9, x: 0, y: 0, z: 0, sx: 0, sy: 0, sr: 0 };
+  });
+  // orbit line: front half / back half (unit circle, scaled and tilted with the ring)
+  const ringMat = new THREE.LineBasicMaterial({ ...glow, color: o.color, opacity: 0 });
+  const arc = (a0) => new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+    Array.from({ length: 65 }, (_, k) => new THREE.Vector3(Math.cos(a0 + Math.PI * k / 64), 0, Math.sin(a0 + Math.PI * k / 64)))), ringMat);
+  const arcF = arc(0), arcB = arc(Math.PI), ring = new THREE.Group();
+  ring.add(arcF, arcB); ring.rotation.x = o.tilt; ring.visible = o.ring > 0; scene.add(ring);
+
+  let box = { x: 0, y: 0, w: 1, h: 1 }, rx = 1, rz = 1, size = 1, d = 1;
+  // ring centred on the photo at chest height; narrower only if the screen is
+  const measure = () => {
+    const w = wrap.getBoundingClientRect(), r = photo && photo.getBoundingClientRect(), ok = r && r.width > 0;
+    size = (ok ? r.height : w.height * 0.8) * o.size;
+    rx = Math.max(size, Math.min((ok ? r.width : w.width * 0.3) * o.radius, (w.width - size * 1.4 - 16) / 2));
+    rz = rx * 0.8;
+    const pcx = ok ? r.left - w.left + r.width / 2 : w.width * 0.72;
+    const cx = Math.min(Math.max(pcx, rx + size * 0.7 + 8), w.width - rx - size * 0.7 - 8);
+    const cy = ok ? r.top - w.top + r.height * o.height : w.height * 0.5;
+    const ry = rz * Math.sin(o.tilt), padX = size * 1.3, padY = size * 1.5;
+    box = { x: cx - rx - padX, y: cy - ry - padY, w: (rx + padX) * 2, h: (ry + padY) * 2 };
+    for (const c of [back, front]) Object.assign(c.style, { left: box.x + "px", top: box.y + "px", width: box.w + "px", height: box.h + "px" });
+    ren.forEach((x) => x.setSize(box.w, box.h, false));
+    d = box.w * 2;   // far enough that the front logos only grow ~20%
+    camera.aspect = box.w / box.h; camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(box.h / 2 / d)); camera.far = d * 3;
+    camera.position.set(0, 0, d); camera.updateProjectionMatrix();
+    ring.scale.set(rx, 1, rz);
+  };
+
+  // pointer: mouse hover, or a tap that holds for a moment (phones)
+  let px = -1e4, py = -1e4, tapT = -9, hover = null;
+  const at = (e) => { const w = wrap.getBoundingClientRect(); px = e.clientX - w.left; py = e.clientY - w.top; };
+  wrap.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") at(e); });
+  wrap.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") px = py = -1e4; });
+  wrap.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") { at(e); tapT = t; } });
+
+  const ease = (k) => 1 - Math.pow(1 - k, 3), n = logos.length;
+  let theta = 0, spd = o.speed;
+  const draw = (dt) => {
+    if (tapT > 0 && t - tapT > 1.8) { px = py = -1e4; tapT = -9; }
+    spd += ((hover ? 0 : o.speed) - spd) * Math.min(1, dt * 5);
+    if (!still) theta += spd * dt;
+    const st = Math.sin(o.tilt), ct = Math.cos(o.tilt);
+    let best = null;
+    for (const L of logos) {
+      const a = theta + L.i / n * Math.PI * 2, lz = rz * Math.sin(a);
+      const k = Math.min(1, Math.max(0, (t - 1.6 - L.i * 0.08) / 0.6));   // boot-in
+      L.hot += ((hover === L ? 1 : 0) - L.hot) * Math.min(1, dt * 8);
+      L.x = rx * Math.cos(a); L.z = lz * ct;
+      L.y = -lz * st + (still ? 0 : Math.sin(t * 1.3 + L.i * 0.8) * size * 0.08);
+      const sp = (t - L.spinAt) / 0.9, extra = sp < 1 ? ease(sp) * Math.PI * 2 : 0;
+      L.g.position.set(L.x, L.y, L.z);
+      L.g.scale.setScalar(Math.max(1e-3, size * ease(k) * (1 + L.hot * 0.25)));
+      L.g.rotation.set(still ? 0 : Math.sin(t * 0.5 + L.i) * 0.14, (still ? 0 : Math.sin(t * 0.6 + L.i * 0.7) * o.sway) * (1 - L.hot) + extra, 0);
+      // farther = dimmer; flickers while booting, then a rare hologram blink
+      const far = 0.55 + 0.45 * (L.z / rz + 1) / 2;
+      const fl = k < 1 ? (Math.random() < 0.35 ? 0.25 : 1) : (!still && Math.sin(t * 7.3 + L.i * 2.1) > 0.985 ? 0.55 : 1);
+      L.mats.forEach((m, j) => { m.opacity = Math.min(1, base[j] * far * fl * (1 + L.hot * 1.2)); });
+      // where it is on screen (hero coords) for the hit test and the label
+      const p = d / (d - L.z);
+      L.sx = box.x + box.w / 2 + L.x * p; L.sy = box.y + box.h / 2 - L.y * p; L.sr = size * 0.6 * p;
+      // logos deep behind the photo can't be picked
+      if (k >= 1 && L.z > -rz * 0.35 && Math.hypot(px - L.sx, py - L.sy) < L.sr && (!best || L.z > best.z)) best = L;
+    }
+    if (best !== hover) {
+      if (best && t - best.spinAt > 1) best.spinAt = t;
+      hover = best; tip.classList.toggle("on", !!hover);
+      if (hover) tip.textContent = "▸ " + hover.label;
+    }
+    if (hover) Object.assign(tip.style, { left: hover.sx + "px", top: hover.sy + hover.sr + 6 + "px" });
+    ringMat.opacity = o.ring * Math.min(1, Math.max(0, (t - 1.2) / 0.8));
+    // back half on the canvas behind the photo, front half on the one in front
+    [false, true].forEach((isFront, j) => {
+      logos.forEach((L) => { L.g.visible = (L.z >= 0) === isFront; });
+      arcF.visible = isFront; arcB.visible = !isFront;
+      ren[j].render(scene, camera);
+    });
+  };
+  measure();
+  back.classList.add("on"); front.classList.add("on");
+  if (still) { t = 99; draw(0); }
+  const remeasure = () => { measure(); if (still) draw(0); };
+  if (photo) photo.addEventListener("load", remeasure);
+  addEventListener("load", remeasure);
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(remeasure, 150); });
+  if (still) return;
+  let on = true, prev = performance.now();
+  new IntersectionObserver(([e]) => { on = e.isIntersecting; }).observe(wrap);
+  const loop = (now) => {
+    requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
+    const pn = wrap.closest(".hs-panel"); if (!on || (pn && pn.classList.contains("hs-off"))) return;
+    t += dt; draw(dt);
+  };
+  requestAnimationFrame(loop);
+}
+if (STACK.enabled) heroStack(STACK).catch((e) => console.error("[stack]", e));
+
+/* ---------- text animations on the frames (HOLO.textFx) ----------
+   Picked per frame type: big titles are revealed by a scan line, sentences rise word by word (Thai words come
+   from Intl.Segmenter, so vowels and tone marks never come apart), grey lines flicker on like a hologram, a
+   question glitches on its highlighted word, project titles glitch and their bullet points slide in one by one.
+   Highlights get a sweep of light. Frames mode plays a frame when it comes to rest; normal scrolling plays it
+   when it comes on screen. A story item's  fx: "..."  overrides the main effect of that frame. */
+const FXT = (() => {
+  const off = !HOLO.enabled || !HOLO.textFx || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const api = { play() {} };
+  if (off) return api;
+  const seg = (s, g) => ("Segmenter" in Intl) ? [...new Intl.Segmenter("th", { granularity: g }).segment(s)].map((x) => x.segment) : Array.from(s);
+  const replay = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+  const splitWords = (el) => {
+    let i = 0;
+    const walk = (node) => [...node.childNodes].forEach((ch) => {
+      if (ch.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        seg(ch.textContent, "word").forEach((w) => {
+          if (!w.trim()) { frag.append(w); return; }
+          const s = document.createElement("span"); s.className = "fx-w"; s.style.setProperty("--i", i++); s.textContent = w; frag.append(s);
+        });
+        ch.replaceWith(frag);
+      } else if (ch.nodeType === 1 && ch.tagName !== "BR") walk(ch);
+    });
+    walk(el);
+  };
+  const RUN = {
+    scan: (el) => replay(el, "fx-play"), words: (el) => replay(el, "fx-play"), flicker: (el) => replay(el, "fx-play"),
+    glitch: (el) => replay(el, "fx-play"), lines: (el) => replay(el, "fx-play"),
+    shine: (el) => { el.classList.remove("fx-shine"); void el.offsetWidth; el.classList.add("fx-shine"); },
+    type: (el) => {
+      const g = seg(el.dataset.fxText, "grapheme"); let i = 0;
+      clearInterval(el._iv); el.textContent = ""; el.classList.add("fx-caret", "fx-typed");
+      el._iv = setInterval(() => { el.textContent += g[i++] || ""; if (i >= g.length) { clearInterval(el._iv); setTimeout(() => el.classList.remove("fx-caret"), 600); } }, 55);
+    }
+  };
+  document.addEventListener("animationend", (e) => { if (e.animationName === "fxShine") e.target.classList.remove("fx-shine"); });
+  // set an element up for an effect (classes stay on; the animation only runs while .fx-play is on)
+  const prep = (el, fx) => {
+    if (!el || fx === "none") return null;
+    if (fx === "scan" || fx === "flicker") el.classList.add("fx-" + fx);
+    if (fx === "words") { el.classList.add("fx-words"); splitWords(el); }
+    if (fx === "glitch") { el.classList.add("fx-glitch"); el.dataset.text = el.textContent; }
+    if (fx === "lines") { el.classList.add("fx-lines"); [...el.children].forEach((li, i) => li.style.setProperty("--i", i)); }
+    if (fx === "type") { if (el.children.length) return null; el.dataset.fxText = el.textContent; }
+    return { el, fx };
+  };
+  const steps = (root, list) => { root._fx = list.filter((s) => s && s.el); };
+  function setup() {
+    const hero = document.getElementById("hero-wrap");
+    steps(hero, [{ ...prep(hero.querySelector(".hero-thai"), "type"), delay: 650 }, { ...prep(hero.querySelector(".hero-tag .st-hl"), "shine"), delay: 1500 }]);
+    document.querySelectorAll("#app > section").forEach((sec) => {
+      const own = sec.dataset.fx, hl = sec.querySelector(".st-hl");
+      let list = [];
+      if (sec.classList.contains("is-project")) {
+        const title = sec.querySelector(".st-title"), th = title && title.querySelector(".st-hl");
+        list = [
+          { ...prep(sec.querySelector(".st-eyebrow"), "type"), delay: 0 },
+          { ...prep(th && th.textContent === title.textContent.trim() ? th : title, own || (th ? "glitch" : "scan")), delay: 150 },
+          { ...prep(sec.querySelector(".st-sub"), "scan"), delay: 500 },
+          { ...prep(sec.querySelector(".st-points"), "lines"), delay: 700 }
+        ];
+      } else if (sec.classList.contains("story")) {
+        const title = sec.querySelector(".st-title"), text = sec.querySelector(".st-text"), main = title || text;
+        if (!main) return;
+        const muted = main.classList.contains("muted");
+        // grey = flicker; a question = glitch its highlight; "จนกระทั่ง..." = typed out; other titles = scan; sentences = words
+        let fx = own || (muted ? "flicker" : title ? (/[?？]/.test(title.textContent) && hl ? "glitch" : /(\.\.\.|…)\s*$/.test(title.textContent) && !hl ? "type" : "scan") : "words");
+        const target = fx === "glitch" && hl ? hl : main;
+        list = [{ ...prep(target, fx), delay: 120 }];
+        if (hl && fx !== "glitch" && !muted) list.push({ ...prep(hl, "shine"), delay: fx === "words" ? 900 : 1000 });
+      } else if (sec.id === "contact") {
+        // title scans in, the terminal types its command, the rows slide in, then the closing line
+        list = [{ ...prep(sec.querySelector(".ct-title"), "scan"), delay: 100 }, { ...prep(sec.querySelector(".ct-title .st-hl"), "shine"), delay: 1000 },
+          { ...prep(sec.querySelector(".ct-cmd-text"), "type"), delay: 600 }, { ...prep(sec.querySelector(".ct-list"), "lines"), delay: 1500 },
+          { ...prep(sec.querySelector(".ct-closing"), "scan"), delay: 2300 }];
+      }
+      steps(sec, list);
+    });
+    // normal scrolling (phones): each frame waits armed and plays once it scrolls in (a low threshold, because
+    // project frames on a phone can be taller than two screens); frames mode arms/plays them itself (HS.update)
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting && !(typeof HS !== "undefined" && HS.on) && !e.target._fxDone) { e.target._fxDone = true; api.play(e.target); }
+    }), { threshold: 0.15 });
+    [hero, ...document.querySelectorAll("#app > section")].forEach((el) => { io.observe(el); if (el !== hero) api.arm(el); });
+  }
+  api.play = (root) => {
+    if (!root || !root._fx) return;
+    (root._fxT || []).forEach(clearTimeout);
+    root._fxT = root._fx.map(({ el, fx, delay }) => setTimeout(() => RUN[fx](el), delay || 0));
+  };
+  // hide a frame's animated text until play() reaches each part (called as the frame starts coming in)
+  api.arm = (root) => {
+    if (!root || !root._fx) return;
+    (root._fxT || []).forEach(clearTimeout);
+    root._fx.forEach(({ el, fx }) => {
+      el.classList.remove("fx-play", "fx-typed", "fx-caret");
+      if (fx === "type") { clearInterval(el._iv); el.textContent = el.dataset.fxText; }
+    });
+    root.classList.add("fx-armed");
+  };
+  setup();
+  // first screen: the hero is armed right away so its typed name doesn't show first and then retype
+  api.arm(document.getElementById("hero-wrap"));
+  return api;
+})();
 
 /* ---------- moving square grid behind every frame except the first (ShapeGrid look, square shape) ----------
    Drawn with CSS gradients instead of a canvas per frame (a full-screen canvas for each of ~15 frames would
@@ -1714,14 +2259,14 @@ function lightbox() {
     clearTimeout(closeT);
     list = [...img.closest(".st-gallery").querySelectorAll(".st-pic img")].filter((im) => im.naturalWidth);
     lb.hidden = false; document.documentElement.classList.add("lb-open");
-    show(list.indexOf(img), true);
+    show(list.indexOf(img), img.getBoundingClientRect().width > 0);   // hidden thumbnail (tunnel): just fade in
     lb.getBoundingClientRect(); lb.classList.add("open");   // reflow first so the fade-in still animates
     lb.querySelector(".lb-close").focus({ preventScroll: true });
   }
   function close() {
     if (lb.hidden || !lb.classList.contains("open")) return;
     lb.classList.remove("open");
-    big.style.transform = over(src, fit(src));   // shrink back onto the thumbnail
+    big.style.transform = src.getBoundingClientRect().width ? over(src, fit(src)) : "scale(.92)";   // shrink back onto the thumbnail
     closeT = setTimeout(() => { lb.hidden = true; big.style.transform = ""; document.documentElement.classList.remove("lb-open"); }, 380);
   }
 
@@ -1747,8 +2292,29 @@ function lightbox() {
   lb.addEventListener("wheel", block, { passive: false });
   lb.addEventListener("touchmove", block, { passive: false });
   addEventListener("resize", () => { if (!lb.hidden) place(fit(src)); });
+  return { open, isOpen: () => !lb.hidden };
 }
-lightbox();
+const LB = lightbox();
+
+/* ---------- contact: copy buttons (email / phone) ---------- */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".ct-copy"); if (!b) return;
+  const text = b.dataset.copy, label = b.lastElementChild;
+  const say = (msg, ms) => { b.classList.add("done"); label.textContent = msg; clearTimeout(b._t);
+    b._t = setTimeout(() => { b.classList.remove("done"); label.textContent = "คัดลอก"; }, ms); };
+  const done = () => say("คัดลอกแล้ว", 1600);
+  const fallback = () => {   // older browsers / blocked clipboard: copy through a hidden textarea
+    const ta = Object.assign(document.createElement("textarea"), { value: text }); ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (_) {} ta.remove();
+    if (ok) { done(); return; }
+    // still blocked: select the address on the page so Ctrl+C works
+    const v = b.closest(".ct-row").querySelector(".ct-value"), r = document.createRange(); r.selectNodeContents(v);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); say("กด Ctrl+C", 2600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+});
+
+let TUN = null;   // the projects tunnel, set once it's ready (see projectTunnel())
 
 /* ---------- frames: vertical scroll plays a transition between stacked frames ---------- */
 const HS = (() => {
@@ -1871,15 +2437,90 @@ const HS = (() => {
       }
     }
   };
+  /* camera moves (hologram look). c/n = whole frames, inner() = their content, dim() = darkening layer */
+  const smooth = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+  const persp = (px, origin) => { stage.style.perspective = px + "px"; if (origin) stage.style.perspectiveOrigin = origin; };
+  const streaks = Array.from({ length: 160 }, () => ({ a: Math.random() * Math.PI * 2, r: Math.random(), l: 0.2 + Math.random() * 0.8, w: 0.5 + Math.random() * 1.6 }));
+  function drawWarp(amp, e) {   // light-speed streaks flying out of the centre
+    const cv = ov.warp, dpr = Math.min(2, devicePixelRatio || 1); if (!cv) return;
+    cv.style.display = "block";
+    if (cv.width !== Math.round(sw * dpr)) { cv.width = Math.round(sw * dpr); cv.height = Math.round(sh * dpr); }
+    const x = cv.getContext("2d"), cx = sw / 2, cy = sh / 2, R = Math.hypot(sw, sh) / 2;
+    x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, sw, sh);
+    for (const s of streaks) {
+      const r0 = ((s.r + e * 1.8) % 1) * R, len = s.l * R * 0.5 * amp;
+      x.strokeStyle = `rgba(${s.w > 1.4 ? "224,253,255" : "0,240,255"},${(0.75 * amp).toFixed(3)})`; x.lineWidth = s.w;
+      x.beginPath(); x.moveTo(cx + Math.cos(s.a) * r0, cy + Math.sin(s.a) * r0); x.lineTo(cx + Math.cos(s.a) * (r0 + len), cy + Math.sin(s.a) * (r0 + len)); x.stroke();
+    }
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, R * 0.5); g.addColorStop(0, `rgba(224,253,255,${(0.45 * amp).toFixed(3)})`); g.addColorStop(1, "rgba(0,102,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, sw, sh);
+  }
+  const tunOn = () => document.documentElement.classList.contains("tun-on");
+  Object.assign(FX, {
+    warp(c, n, e) {
+      if (e < 0.5) { const k = e / 0.5; inner(c).style.transform = `scale(${1 + k * 1.4})`; inner(c).style.opacity = 1 - k; inner(c).style.filter = `blur(${k * 10}px)`; dim(c, 0.6 * k); n.style.opacity = 0; }
+      else { const k = (e - 0.5) / 0.5; c.style.opacity = 0; inner(n).style.transform = `scale(${0.55 + 0.45 * k})`; inner(n).style.filter = `blur(${(1 - k) * 10}px)`; n.style.opacity = k; }
+      drawWarp(Math.sin(Math.PI * e), e);
+    },
+    dolly(c, n, e) {   // fly through the old frame (its content passes overhead) toward the next one
+      persp(1000); const amp = Math.sin(Math.PI * e);
+      c.style.zIndex = panels.length; c.style.background = "transparent";
+      c.style.transform = `translateZ(${(e * e * 950).toFixed(1)}px)`; c.style.opacity = 1 - smooth(0.45, 0.8, e); inner(c).style.filter = `blur(${(amp * 5).toFixed(1)}px)`;
+      n.style.transform = `translateZ(${(-2200 * Math.pow(1 - e, 1.4)).toFixed(1)}px)`; n.style.opacity = smooth(0, 0.3, e);
+      inner(n).style.filter = `blur(${((1 - e) * 4).toFixed(1)}px)`; dim(n, 0.5 * (1 - e));
+    },
+    crane(c, n, e) { FX.tilt(c, n, e, 1); },   // camera sinks: old frame rises away, next one comes up from below
+    lift(c, n, e) { FX.tilt(c, n, e, -1); },   // camera rises: old frame drops away, next one comes down from above
+    tilt(c, n, e, d) {
+      persp(1300); const amp = Math.sin(Math.PI * e), o = `50% 50% -${Math.round(sh * 0.9)}px`;
+      c.style.transformOrigin = n.style.transformOrigin = o; c.style.backfaceVisibility = n.style.backfaceVisibility = "hidden";
+      c.style.transform = `translateZ(${-amp * 200}px) rotateX(${d * 72 * e}deg)`; n.style.transform = `translateZ(${-amp * 200}px) rotateX(${-d * 72 * (1 - e)}deg)`;
+      dim(c, 0.7 * e); dim(n, 0.6 * (1 - e));
+    },
+    roll(c, n, e) {
+      const amp = Math.sin(Math.PI * e);
+      c.style.transform = `rotate(${e * 28}deg) scale(${1 + e * 0.7})`; inner(c).style.filter = `blur(${amp * 6}px)`; c.style.opacity = Math.max(0, 1 - e * 1.6);
+      n.style.transform = `rotate(${-(1 - e) * 28}deg) scale(${0.6 + 0.4 * e})`; n.style.opacity = Math.min(1, Math.max(0, (e - 0.25) / 0.6)); inner(n).style.filter = `blur(${(1 - e) * 6}px)`;
+    },
+    orbit(c, n, e) {
+      persp(1400); const amp = Math.sin(Math.PI * e), o = `50% 50% -${Math.round(sw * 0.75)}px`;
+      c.style.transformOrigin = n.style.transformOrigin = o; c.style.backfaceVisibility = n.style.backfaceVisibility = "hidden";
+      c.style.transform = `translateZ(${-amp * 260}px) rotateY(${-75 * e}deg)`; n.style.transform = `translateZ(${-amp * 260}px) rotateY(${75 * (1 - e)}deg)`;
+      dim(c, 0.7 * e); dim(n, 0.7 * (1 - e));
+    },
+    swing(c, n, e) {
+      persp(1200); const amp = Math.sin(Math.PI * e), back = -amp * 520;
+      c.style.transform = `translateZ(${back}px) translateX(${-e * 112}%) rotateY(${e * 38}deg)`; n.style.transform = `translateZ(${back}px) translateX(${(1 - e) * 112}%) rotateY(${-(1 - e) * 38}deg)`;
+      c.style.borderRadius = n.style.borderRadius = `${amp * 18}px`; dim(c, 0.4 * e); dim(n, 0.4 * (1 - e));
+    },
+    dive(c, n, e) {   // dive into the middle of the screen; the next frame opens out of that point
+      const amp = Math.sin(Math.PI * e);
+      c.style.zIndex = panels.length; c.style.transformOrigin = "50% 55%"; c.style.transform = `scale(${1 + e * e * 7})`;
+      c.style.opacity = 1 - smooth(0.5, 0.85, e); inner(c).style.filter = `blur(${amp * 6}px)`;
+      const r = Math.pow(e, 1.4) * 75; n.style.clipPath = `circle(${r}% at 50% 55%)`; inner(n).style.transform = `scale(${1.5 - 0.5 * e})`;
+      const R = r / 100 * Math.hypot(sw, sh) / Math.SQRT2;
+      Object.assign(ov.ring.style, { display: "block", width: 2 * R + "px", height: 2 * R + "px", opacity: String(Math.min(1, (1 - e) * 3)) });
+      drawWarp(amp * 0.6, e);
+    },
+    fly(c, n, e) {   // project -> project: the tunnel keeps flying behind; the texts swap
+      inner(c).style.opacity = Math.max(0, 1 - e * 2); inner(c).style.transform = `translate3d(${-e * 60}px,0,0)`;
+      inner(n).style.opacity = Math.max(0, e * 2 - 1); inner(n).style.transform = `translate3d(${(1 - e) * 60}px,0,0)`;
+      if (!tunOn()) n.style.opacity = e;   // no tunnel: plain cross-fade
+    }
+  });
+
   // some transitions need a bit longer in step mode to read well (multiplies stepDuration)
-  const FX_TIME = { drop: 1.5, cube: 1.15, fade: 1.2 };
+  const FX_TIME = { drop: 1.5, cube: 1.15, fade: 1.2, warp: 1.35, dolly: 1.3, crane: 1.25, lift: 1.25, roll: 1.1, orbit: 1.25, swing: 1.3, dive: 1.35, fly: 1.4 };
   const nameFor = (i) => { const list = FRAMES.transitions || []; return list[i % (list.length || 1)]; };
   const fxFor = (i) => FX[nameFor(i)] || FX.slide;
 
   function reset(p) {
-    p.style.transform = p.style.clipPath = p.style.opacity = p.style.borderRadius = p.style.boxShadow = p.style.transformOrigin = p.style.pointerEvents = p.style.backfaceVisibility = "";
+    p.style.transform = p.style.clipPath = p.style.opacity = p.style.borderRadius = p.style.boxShadow = p.style.transformOrigin = p.style.pointerEvents = p.style.backfaceVisibility = p.style.background = "";
+    p.style.zIndex = p._z;
     inner(p).style.transform = inner(p).style.opacity = inner(p).style.filter = ""; dim(p, 0);
   }
+  let restAt = -1;   // frame that last came to rest (its text animation has been started)
+  let arrIdx = -1, arrPlayed = false;   // frame currently coming in, and whether its text animation has started
 
   function layout() {
     vh = innerHeight; step = vh * FRAMES.scrollPerFrame;
@@ -1909,7 +2550,7 @@ const HS = (() => {
     const k = Math.min(1, Math.max(0, (t - h) / (1 - 2 * h)));
     const e = FRAMES.stepMode ? k : ease(k);
     for (const o in ov) ov[o].style.display = "none";
-    stage.style.perspective = "";
+    stage.style.perspective = stage.style.perspectiveOrigin = "";
     panels.forEach((pn, i) => {
       reset(pn);
       const show = i === a || (i === a + 1 && e > 0);
@@ -1923,6 +2564,19 @@ const HS = (() => {
       if (!show) inner(pn).firstChild.classList.remove("st-play");
     });
     if (e === 0) inner(panels[a]).firstChild.classList.add("st-play");
+    // text animations: the incoming frame hides its animated text as soon as it appears, and starts playing
+    // when the transition is ~60% done, so the text builds up as the frame lands (once per arrival)
+    if (e > 0) {
+      const fwd = busy ? tw.to > tw.from : true, arr = fwd ? a + 1 : a, k = fwd ? e : 1 - e;
+      if (arrIdx !== arr) { arrIdx = arr; arrPlayed = false; FXT.arm(inner(panels[arr]).firstChild); }
+      if (!arrPlayed && k >= 0.6) { arrPlayed = true; FXT.play(inner(panels[arr]).firstChild); }
+      restAt = -1;
+    } else if (restAt !== a) {
+      restAt = a;
+      if (!(arrIdx === a && arrPlayed)) FXT.play(inner(panels[a]).firstChild);
+      arrIdx = -1;
+    }
+    if (TUN) TUN.sync(a, e, panels);   // the tunnel follows the frames (shown behind project frames)
     if (a < n - 1 && e > 0) fxFor(a)(panels[a], panels[a + 1], e);
   }
 
@@ -1933,8 +2587,8 @@ const HS = (() => {
     app.before(root); stage = root.firstChild;
     const items = [heroWrap, ...app.querySelectorAll(":scope > section")];
     panels = items.map((el, i) => {
-      const p = document.createElement("div"); p.className = "hs-panel" + (el === heroWrap ? " hs-hero" : "");
-      p.style.zIndex = i;
+      const p = document.createElement("div"); p.className = "hs-panel" + (el === heroWrap ? " hs-hero" : "") + (el.classList.contains("is-project") ? " hs-proj" : "");
+      p.style.zIndex = p._z = i;
       const inn = document.createElement("div"); inn.className = "hs-inner"; inn.appendChild(el);
       const d = document.createElement("div"); d.className = "hs-dim";
       p.append(inn, d); stage.appendChild(p);
@@ -1948,6 +2602,9 @@ const HS = (() => {
       const el = document.createElement("div"); el.className = cls; el.style.zIndex = panels.length + 1;
       stage.appendChild(el); ov[k] = el;
     });
+    ov.warp = document.createElement("canvas"); ov.warp.className = "hs-warp"; ov.warp.style.zIndex = panels.length + 1; stage.appendChild(ov.warp);
+    restAt = -1;
+    if (TUN) TUN.attach(stage);
     st.ids = items.map((el) => (el === heroWrap ? null : el.id));
     st.on = true;
     document.documentElement.classList.add("hs-on");
@@ -2018,6 +2675,13 @@ const HS = (() => {
   addEventListener("wheel", (ev) => {
     if (!stepOn() || ev.ctrlKey) return;
     const dir = Math.sign(ev.deltaY); if (!dir) return;
+    // resting on a project frame: the wheel flies through the tunnel; at either end only a NEW gesture leaves the frame
+    if (TUN && !busy && TUN.active() && inZone()) {
+      const t = performance.now();
+      if (!TUN.edge(dir)) { ev.preventDefault(); lastWheel = t; armed = false; TUN.push(ev.deltaY); return; }
+      if (t - lastWheel < 220) { ev.preventDefault(); lastWheel = t; return; }   // momentum of the flight: stay
+      armed = true;
+    }
     if (!inZone() || (atEnd(dir) && !busy)) return;
     ev.preventDefault();
     const now = performance.now(), gap = now - lastWheel, abs = Math.abs(ev.deltaY), prev = lastAbs;
@@ -2041,6 +2705,7 @@ const HS = (() => {
     if (k === "Home") { ev.preventDefault(); animateTo(0); return; }
     const dir = (k === "ArrowDown" || k === "PageDown" || (k === " " && !ev.shiftKey)) ? 1
               : (k === "ArrowUp" || k === "PageUp" || (k === " " && ev.shiftKey)) ? -1 : 0;
+    if (dir && TUN && !busy && TUN.active() && inZone() && !TUN.edge(dir)) { ev.preventDefault(); TUN.push(dir * 300); return; }
     if (!dir || !inZone() || atEnd(dir)) return;
     ev.preventDefault(); go(dir);
   });
@@ -2056,6 +2721,7 @@ const HS = (() => {
   addEventListener("touchend", (ev) => {
     if (ty === null) return;
     const dy = ty - ev.changedTouches[0].clientY, dir = Math.sign(dy); ty = null;
+    if (Math.abs(dy) > 40 && TUN && !busy && TUN.active() && inZone() && !TUN.edge(dir)) { TUN.push(dy * 2); return; }
     if (Math.abs(dy) > 40 && inZone() && !atEnd(dir)) go(dir);
   });
 
@@ -2081,6 +2747,7 @@ const HS = (() => {
   const start = () => {
     if (want() && !st.on) enter();
     if (document.fonts) document.fonts.ready.then(() => { if (st.on && !fits()) exit(); });
+    setTimeout(() => { if (st.on) update(); }, 300);   // a reload may restore the old scroll position after this
   };
   if (document.readyState === "complete") start(); else addEventListener("load", start);
   addEventListener("scroll", update, { passive: true });
@@ -2098,9 +2765,262 @@ const HS = (() => {
 
   return {
     get on() { return st.on; },
-    activeId: () => st.ids[Math.round(st.pos)] || null
+    activeId: () => st.ids[Math.round(st.pos)] || null,
+    refresh: () => update()
   };
 })();
+
+/* ---------- projects tunnel (TUNNEL): one 3D tunnel behind every project frame ----------
+   Frames mode only (wide screens). Each project gets a gate with its title, and its gallery pictures hang in
+   the tunnel on a wave; they tumble into view as you fly past (idea from Codrops "Rotating On-Scroll
+   Animations"). HS tells the tunnel which frames are showing (sync); while a project frame is at rest the
+   wheel flies the camera, and only a new scroll at either end moves on to the next frame. */
+async function projectTunnel(o) {
+  if (!o.enabled || !FRAMES.enabled || innerWidth < FRAMES.minWidth || matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+  const items = [["story", SITE.story], ["after", SITE.storyAfter]].flatMap(([prefix, list]) => (list || [])
+    .map((s, i) => (s.kind === "project" ? { id: `${prefix}-${i + 1}`, s } : null)).filter(Boolean));   // frame order = header tabs
+  if (!items.length) return null;
+  const THREE = await import(o.three);
+  await new Promise((ok) => (document.readyState === "complete" ? ok() : addEventListener("load", ok, { once: true })));
+  if (document.fonts) await Promise.all([document.fonts.load('700 40px "JetBrains Mono"'), document.fonts.load('700 40px "Noto Sans Thai"', "ก")]).catch(() => {});
+
+  THREE.ColorManagement.enabled = false;   // colours and pictures are used exactly as they are
+  const canvas = document.createElement("canvas"); canvas.id = "tun-gl"; canvas.setAttribute("aria-hidden", "true");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); } catch (e) { return null; }
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setPixelRatio(Math.min(o.dpr || 1, devicePixelRatio || 1));
+  const TAU = Math.PI * 2, DEG = Math.PI / 180;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), mod1 = (v) => ((v % 1) + 1) % 1, wrapHalf = (v) => mod1(v + 0.5) - 0.5;
+  const smooth = (a, b, v) => { const k = clamp((v - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const BG = new THREE.Color("#05060c");
+  const scene = new THREE.Scene(); scene.background = BG; scene.fog = new THREE.Fog(BG, 16, 78);
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 300);
+
+  // a closed, gently winding path; the projects are spread evenly along one lap
+  const path = [];
+  for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; path.push(new THREE.Vector3(Math.cos(a) * 72 + Math.sin(a * 3) * 12, Math.sin(a * 2) * 9, Math.sin(a) * 72 + Math.cos(a * 2) * 10)); }
+  const curve = new THREE.CatmullRomCurve3(path, true, "centripetal"), L = curve.getLength(), UP = new THREE.Vector3(0, 1, 0);
+  const frameAt = (t) => { const P = curve.getPointAt(mod1(t)), T = curve.getTangentAt(mod1(t));
+    const B = new THREE.Vector3().crossVectors(T, UP).normalize(), N = new THREE.Vector3().crossVectors(B, T).normalize(); return { P, T, B, N }; };
+  const basis = (f) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.B, f.N, f.T.clone().negate()));
+  const GAP = 6, PIC0 = 3;   // path units between pictures / from the gate to the first picture
+  items.forEach((it, j) => {
+    const n = (it.s.gallery || []).length;
+    it.u = (0.04 + j / items.length) * L;               // the gate
+    it.lo = it.u - 18; it.rest = it.u - 9;               // where the frame starts / where the camera glides to (gate + title in view)
+    it.hi = it.u + PIC0 + Math.max(0, n - 1) * GAP + 8;  // where the frame ends (after the last picture)
+  });
+
+  // tunnel wall: grid (or rings) with data pulses streaming along it
+  const tubeMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: { uTime: { value: 0 }, uSpeed: { value: 0 }, uStyle: { value: o.style === "rings" ? 1 : 0 }, uBg: { value: BG },
+      uC1: { value: new THREE.Color("#00f0ff") }, uC2: { value: new THREE.Color("#0066ff") }, uNode: { value: new THREE.Color("#3dffa8") } },
+    vertexShader: `varying vec2 vUv; varying float vDepth; void main() { vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform float uTime, uSpeed, uStyle; uniform vec3 uBg, uC1, uC2, uNode; varying vec2 vUv; varying float vDepth;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float gl(float x) { float d = fwidth(x) * 1.4; float f = min(fract(x), 1.0 - fract(x)); return 1.0 - smoothstep(0.0, d, f); }
+      void main() {
+        float U = vUv.x * 520.0, V = vUv.y * 28.0; float ring = gl(U), lon = gl(V), major = gl(U / 13.0);
+        float h = hash(vec2(floor(V), 3.0));
+        float flow = fract(vUv.x * 36.0 - uTime * (0.18 + h * 0.4) * (1.0 + uSpeed * 5.0) + h * 9.0);
+        float pulse = pow(flow, mix(22.0, 2.5, uSpeed)) * lon * step(0.35, h);
+        float node = step(0.93, hash(floor(vec2(U, V) + 0.5))) * ring * lon;
+        vec3 col = uStyle < 0.5 ? uC1 * (ring * 0.16 + lon * 0.22 + major * 0.5) + uC2 * 0.035 : uC1 * (major * 0.95 + ring * 0.05) + uC2 * (lon * 0.12 + 0.04);
+        col += uC1 * pulse * 1.5 + uNode * node * 1.1;
+        gl_FragColor = vec4(uBg + col * (1.0 - smoothstep(14.0, 78.0, vDepth)), 1.0);
+      }`
+  });
+  scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 900, 5, 28, true), tubeMat));
+  { const n = 1800, pos = new Float32Array(n * 3);   // floating data dust
+    for (let i = 0; i < n; i++) { const f = frameAt(Math.random()), a = Math.random() * TAU, r = Math.sqrt(Math.random()) * 4.4;
+      const p = f.P.clone().addScaledVector(f.B, Math.cos(a) * r).addScaledVector(f.N, Math.sin(a) * r); pos.set([p.x, p.y, p.z], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0x7ff6ff, size: 0.05, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }))); }
+
+  // gates (title of the project) and pictures
+  const font = (w, px) => `${w} ${px}px "JetBrains Mono","Noto Sans Thai",monospace`;
+  const label = (text) => { const c = document.createElement("canvas"); c.width = 1024; c.height = 128; const x = c.getContext("2d");
+    let px = 60; x.font = font(700, px); while (px > 24 && x.measureText(text).width > 980) x.font = font(700, --px);
+    x.textAlign = "center"; x.textBaseline = "middle"; x.shadowColor = "#00f0ff"; x.shadowBlur = 18; x.fillStyle = "#e6f6fb"; x.fillText(text, 512, 66); return c; };
+  const placeholder = (text) => { const c = document.createElement("canvas"); c.width = 640; c.height = 400; const x = c.getContext("2d");
+    x.fillStyle = "#061520"; x.fillRect(0, 0, 640, 400); x.strokeStyle = "rgba(0,240,255,.5)"; x.setLineDash([10, 8]); x.lineWidth = 3; x.strokeRect(6, 6, 628, 388);
+    x.font = font(500, 22); x.fillStyle = "#94A3B8"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, 320, 200); return c; };
+  const gates = [], shots = [], loader = new THREE.TextureLoader(), maxAniso = renderer.capabilities.getMaxAnisotropy();
+  /* each picture is a hologram screen: cyan-tinted, see-through where it's dark, scanlines, a light band running
+     down, a slight flicker and colour split, glowing edge and HUD corner brackets. uHolo 1 = full hologram,
+     0 = the real picture (hovered pictures drop to ~0.1 so you can see them properly). */
+  const holoMat = (map) => new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    uniforms: { map: { value: map }, uTime: { value: 0 }, uHolo: { value: 0.85 }, uOpacity: { value: 1 }, uAspect: { value: 1.6 }, uSeed: { value: Math.random() } },
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform sampler2D map; uniform float uTime, uHolo, uOpacity, uAspect, uSeed; varying vec2 vUv;
+      void main() {
+        float sh = 0.0015 + 0.004 * uHolo;
+        vec3 col = vec3(texture2D(map, vUv + vec2(sh, 0.0)).r, texture2D(map, vUv).g, texture2D(map, vUv - vec2(sh, 0.0)).b);
+        float lum = dot(col, vec3(0.299, 0.587, 0.114));
+        vec3 holo = mix(vec3(0.0, 0.32, 0.75), vec3(0.75, 1.0, 1.0), smoothstep(0.05, 0.9, lum)) * (0.45 + 0.9 * lum);
+        vec3 c = mix(col, holo, uHolo);
+        float scan = 0.84 + 0.16 * sin(vUv.y * 420.0 + uTime * 6.0);
+        float band = exp(-pow((fract(vUv.y + uTime * 0.22 + uSeed) - 0.5) * 22.0, 2.0));
+        float flick = 0.94 + 0.06 * sin(uTime * 31.0 + uSeed * 40.0) * sin(uTime * 7.0 + uSeed);
+        vec2 e = min(vUv, 1.0 - vUv) * vec2(uAspect, 1.0);
+        float edge = 1.0 - smoothstep(0.0, 0.012, min(e.x, e.y));
+        float corner = step(min(e.x, e.y), 0.03) * step(max(e.x, e.y), 0.16);
+        c = c * mix(1.0, scan * flick, uHolo) + vec3(0.0, 0.94, 1.0) * (band * 0.35 * uHolo + edge * 0.6 + corner * 0.9);
+        float a = mix(0.95, 0.3 + 0.7 * smoothstep(0.02, 0.5, lum), uHolo);   // dark parts see-through
+        a = max(a, max(edge * 0.8, corner));
+        gl_FragColor = vec4(c, a * uOpacity);
+      }`
+  });
+  // soft glow around a screen (a glowing frame on a canvas; its rectangle is 62.5% of the plane)
+  const haloTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d");
+    x.shadowColor = "#00f0ff"; x.shadowBlur = 36; x.strokeStyle = "#00f0ff"; x.lineWidth = 6; x.strokeRect(48, 48, 160, 160); x.strokeRect(48, 48, 160, 160);
+    return new THREE.CanvasTexture(c); })();
+  const tagCanvas = (text) => { const c = document.createElement("canvas"); c.width = 768; c.height = 64; const x = c.getContext("2d");
+    x.font = font(500, 30); x.fillStyle = "#7ff6ff"; x.textBaseline = "middle"; x.shadowColor = "#00f0ff"; x.shadowBlur = 10; x.fillText(text, 8, 34); return c; };
+  // w x h = the picture's size in the tunnel (keeps its own shape); the label under it keeps its own size
+  const sizeShot = (m, aspect) => { let w = 2.1 * aspect, h = 2.1; if (w > 3.8) { w = 3.8; h = w / aspect; } if (w < 1.4) { w = 1.4; h = w / aspect; }
+    const u = m.userData; u.w = w; u.h = h; m.scale.set(w, h, 1); m.material.uniforms.uAspect.value = w / h;
+    const tag = m.children[1]; tag.scale.set(2.4 / w, 0.2 / h, 1); tag.position.set(-0.5 + 1.2 / w, -0.5 - 0.17 / h, 0.001); };
+  let gi = 0;
+  items.forEach((it, j) => {
+    const f = frameAt(it.u / L), q = basis(f);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.55, 0.035, 8, 96), new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true }));
+    const arc = new THREE.Mesh(new THREE.RingGeometry(4.2, 4.35, 96, 1, 0, TAU * 0.7), new THREE.MeshBasicMaterial({ color: 0x0066ff, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
+    const tag = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(label(`P/${String(j + 1).padStart(2, "0")} // ${it.s.title}`)), transparent: true, depthWrite: false }));
+    ring.position.copy(f.P); arc.position.copy(f.P); tag.position.copy(f.P).addScaledVector(f.N, 3.35);
+    ring.quaternion.copy(q); arc.quaternion.copy(q); tag.quaternion.copy(q);
+    scene.add(ring, arc, tag); gates.push({ u: it.u, ring, arc });
+    (it.s.gallery || []).forEach((src, k) => {
+      const t = it.u + PIC0 + k * GAP, fr = frameAt(t / L), ph = gi++ * 1.1;
+      const off = fr.B.clone().multiplyScalar(0.9 + Math.sin(ph) * 1.3).addScaledVector(fr.N, Math.cos(ph * 1.3) * 0.7);   // wave, kept right of the text
+      const mat = holoMat(new THREE.CanvasTexture(placeholder(`add ${src}`)));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      halo.scale.set(1.6, 1.6, 1); halo.position.z = -0.02;
+      const n = it.s.gallery.length;
+      const tag = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(tagCanvas(`▸ P/${String(j + 1).padStart(2, "0")} · ${k + 1}/${n}`)), transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+      m.add(halo, tag);
+      m.userData = { j, k, t, base: fr.P.clone(), off, T: fr.T.clone(), q0: basis(fr), hover: 0, holo: 0.85,
+        rx: (70 + Math.random() * 50) * DEG, ry: (Math.random() * 40 - 20) * DEG, rz: (Math.random() * 40 - 20) * DEG };
+      sizeShot(m, 1.6);
+      loader.load(src, (tex) => { tex.anisotropy = maxAniso; mat.uniforms.map.value.dispose(); mat.uniforms.map.value = tex; sizeShot(m, tex.image.width / tex.image.height); }, undefined, () => {});
+      scene.add(m); shots.push(m);
+    });
+  });
+
+  /* state: s = camera position along the path (units), tp = where it's heading */
+  let s = items[0].lo, tp = s, sPrev = s, cur = -1, restIdx = -1, tr = null, active = false, shown = false, pushed = false;
+  let mx = 0, my = 0, lmx = 0, lmy = 0, hot = null, W = 0, H = 0, stage = null;
+  const tc = () => mod1(s / L);
+  const hint = document.createElement("div"); hint.className = "tun-hint"; hint.setAttribute("aria-hidden", "true");
+  const pjOf = (p) => { if (!p) return -1; if (p._pj === undefined) { const sec = p.querySelector(".story.is-project"); p._pj = sec ? items.findIndex((it) => it.id === sec.id) : -1; } return p._pj; };
+  const size = () => { W = canvas.clientWidth; H = canvas.clientHeight; if (!W || !H) return;
+    renderer.setSize(W, H, false); camera.aspect = W / H; camera.setViewOffset(W, H, -W * 0.17, 0, W, H); camera.updateProjectionMatrix(); };
+  addEventListener("resize", size);
+
+  const api = {
+    attach(st) { stage = st; st.prepend(canvas); st.append(hint); size(); },
+    active: () => active && HS.on,
+    edge: (dir) => { const it = items[cur]; if (!it) return true; return dir > 0 ? tp >= it.hi - 0.5 && s >= it.hi - 1.5 : tp <= it.lo + 0.5 && s <= it.lo + 1.5; },
+    push(dy) { const it = items[cur]; if (!it) return; tp = clamp(tp + dy * 0.03, it.lo, it.hi); pushed = true; },
+    // frames a (and a+1 while e > 0) are showing; e = transition progress 0..1 (either direction)
+    sync(a, e, panels) {
+      const A = pjOf(panels[a]), B = e > 0 ? pjOf(panels[a + 1]) : -1;
+      shown = A >= 0 || B >= 0; canvas.style.display = shown ? "block" : "none";
+      if (e === 0) {
+        tr = null; active = A >= 0;
+        if (active && cur !== A) {   // arrived at a project
+          const it = items[A];
+          if (s < it.lo - 1 || s > it.hi + 1) s = sPrev = restIdx < a ? it.lo : it.hi;
+          tp = s < it.rest ? it.rest : clamp(s, it.lo, it.hi);   // glide up to the gate; coming back from the end, stay there
+          pushed = false;
+        }
+        cur = active ? A : -1; restIdx = a; return;
+      }
+      active = false; cur = -1;
+      if (!tr || tr.a !== a) tr = { a, s0: s, fwd: restIdx <= a };
+      let target;
+      if (A >= 0 && B >= 0) target = tr.fwd ? lerp(tr.s0, items[B].lo + 4, e) : lerp(items[A].hi, tr.s0, e);   // keep flying
+      else if (A >= 0) target = tr.fwd ? tr.s0 + e * 12 : items[A].hi + e * 12;                              // leaving / coming back from the end
+      else if (B >= 0) target = tr.fwd ? items[B].lo - 8 + e * 8 : lerp(items[B].lo - 8, tr.s0, e);          // diving in / backing out
+      if (target !== undefined) s = tp = target;
+    }
+  };
+
+  // pointer: look around, hover a picture, click to open it in the picture viewer
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  addEventListener("pointermove", (e) => { if (!shown) return; const r = canvas.getBoundingClientRect(); if (!r.width) return;
+    mx = (e.clientX - r.left) / r.width * 2 - 1; my = (e.clientY - r.top) / r.height * 2 - 1; }, { passive: true });
+  document.addEventListener("click", (e) => {
+    if (!api.active() || !hot || LB.isOpen() || e.target.closest("a, button, .st-text-col, header, .lb")) return;
+    const sec = document.getElementById(items[hot.userData.j].id), img = sec && sec.querySelectorAll(".st-pic img")[hot.userData.k];
+    if (img && img.naturalWidth) LB.open(img);
+  });
+
+  const tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler(), look = new THREE.Vector3();
+  const FOCUS = 6.5, WIN = 13;
+  let last = performance.now(), time = 0;
+  const loop = (now) => {
+    requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!shown || !canvas.isConnected) return;
+    if (!W) size();
+    time += dt;
+    if (active) s += (tp - s) * Math.min(1, dt * 3.2);
+    const v = (s - sPrev) / Math.max(dt, 1e-3); sPrev = s;
+    const spd = clamp(Math.abs(v) / 45, 0, 1);
+    // camera rides the path, looks a little ahead; the pointer turns the head
+    const f = frameAt(tc()), ahead = frameAt(tc() + 7 / L);
+    lmx += (mx - lmx) * 0.06; lmy += (my - lmy) * 0.06;
+    if (api.active()) { const rs = document.documentElement.style; rs.setProperty("--hx", lmx.toFixed(3)); rs.setProperty("--hy", lmy.toFixed(3)); }   // text panel tilts too
+    camera.position.copy(f.P).addScaledVector(f.B, lmx * 0.5).addScaledVector(f.N, -lmy * 0.35);
+    camera.up.copy(f.N);
+    look.copy(ahead.P).addScaledVector(ahead.B, lmx * 2.6).addScaledVector(ahead.N, -lmy * 1.8); camera.lookAt(look);
+    camera.fov = 62 + spd * 34; camera.updateProjectionMatrix();
+    tubeMat.uniforms.uTime.value = time; tubeMat.uniforms.uSpeed.value = spd;
+    // pictures tumble into view, face you FOCUS units ahead, then turn away as you pass
+    for (const m of shots) {
+      const u = m.userData, d = wrapHalf(u.t / L - tc()) * L, k = clamp((d - FOCUS) / WIN, -1, 1);
+      let rx = 0, ry = 0, rz = 0, spread = 1, sc = 1;
+      if (o.mode === 2) { rx = u.rx * 0.25 * k; rz = k * Math.PI * 1.1; }
+      else if (o.mode === 3) { ry = k * Math.PI * 0.55; rz = u.rz * 0.3 * k; }
+      else if (o.mode === 4) { spread = 1 + Math.abs(k) * 1.7; sc = 1 - Math.abs(k) * 0.35; }
+      else { rx = u.rx * k; ry = u.ry * k; rz = u.rz * k; }
+      u.hover += ((m === hot ? 1 : 0) - u.hover) * 0.15;
+      m.position.copy(u.base).addScaledVector(u.off, spread).addScaledVector(u.T, -Math.sin((k * 0.5 + 0.5) * Math.PI) * 0.6);
+      m.quaternion.copy(u.q0).multiply(tmpQ.setFromEuler(tmpE.set(rx, ry, rz)));
+      const z = sc * (1 + u.hover * 0.08); m.scale.set(u.w * z, u.h * z, 1);   // picture's own shape (sizeShot)
+      const op = (1 - smooth(0.8, 1, Math.abs(k)) * 0.7) * (0.12 + 0.88 * smooth(0.5, 3.5, d));
+      u.holo += ((m === hot ? 0.1 : 0.85) - u.holo) * 0.12;   // hover: the hologram clears to the real picture
+      const U2 = m.material.uniforms; U2.uOpacity.value = op; U2.uHolo.value = u.holo; U2.uTime.value = time;
+      m.children[0].material.opacity = (0.3 + 0.45 * u.hover + 0.15 * (1 - Math.abs(k))) * op;
+      m.children[1].material.opacity = 0.9 * op;
+    }
+    gates.forEach((g, i) => { const d = wrapHalf(g.u / L - tc()) * L; g.ring.material.opacity = 0.35 + (1 - smooth(4, 18, Math.abs(d))) * 0.65; g.arc.rotation.z = time * 0.6 + i; });
+    // hover (only while a project frame is at rest)
+    if (api.active() && !LB.isOpen()) { ndc.set(mx, -my); ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(shots, false)[0]; hot = h && h.distance < 24 ? h.object : null; }
+    else hot = null;
+    if (stage) stage.style.cursor = hot ? "zoom-in" : "";
+    // hint: how to fly at the start, how to move on at the end
+    const it = items[cur], atEnd = it && s >= it.hi - 1.5;
+    const msg = !api.active() ? "" : atEnd ? o.hintEnd : !pushed ? o.hint : "";
+    if (msg && hint.innerHTML !== msg) hint.innerHTML = msg;
+    hint.classList.toggle("on", !!msg);
+    renderer.render(scene, camera);
+  };
+  requestAnimationFrame(loop);
+  return api;
+}
+projectTunnel(TUNNEL).then((api) => {
+  if (!api) return;
+  TUN = api; document.documentElement.classList.add("tun-on");
+  const st = document.getElementById("hs-sticky"); if (st) api.attach(st);
+  if (HS.on) HS.refresh();
+}).catch((e) => console.error("[tunnel]", e));
 
 /* ---------- scroll tracking: progress bar + active section in nav ---------- */
 (() => {
