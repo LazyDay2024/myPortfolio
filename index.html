@@ -121,6 +121,27 @@
     #hero-wrap .fade { background:linear-gradient(0deg, #0B0F14 0%, rgba(11,15,20,.6) 30%, rgba(11,15,20,.6) 75%, rgba(11,15,20,.2) 100%); }
   }
 
+  /* hero: 3D circuit board (wide screens). Darkening only behind the name so the board stays visible elsewhere */
+  #hero-wrap.cx-on #fibers { display:none; }
+  #hero-wrap #circuit { opacity:0; transition:opacity 1s ease; }
+  #hero-wrap #circuit.on { opacity:1; }
+  #hero-wrap.cx-on .fade { background:radial-gradient(ellipse 44% 50% at 24% 54%, rgba(11,15,20,.82) 0%, rgba(11,15,20,.5) 55%, transparent 100%),
+    linear-gradient(0deg, #0B0F14 0%, transparent 18%); }
+  #hero-wrap.cx-on { cursor:grab; }
+  #hero-wrap.cx-on.cx-drag { cursor:grabbing; }
+  #hero-wrap.cx-on.cx-hot { cursor:pointer; }
+  #hero-wrap.cx-on #hero, #hero-wrap.cx-on #hero :not(a):not(a *) { cursor:inherit; }
+  .cx-tip { position:absolute; left:0; top:0; z-index:6; pointer-events:none; white-space:nowrap; opacity:0; transition:opacity .15s;
+    padding:.45rem .8rem; border-radius:.4rem; border:1px solid rgba(0,240,255,.4); background:rgba(8,14,20,.92);
+    box-shadow:0 0 18px rgba(0,102,255,.25); }
+  .cx-tip.on { opacity:1; }
+  .cx-tip b { display:block; font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-weight:700; font-size:14px; line-height:1.5; color:#F1F5F9; }
+  .cx-tip span { display:block; font-family:"Noto Sans Thai","Inter",sans-serif; font-size:13px; line-height:1.5; color:#94A3B8; }
+  .cx-hint { position:absolute; z-index:6; left:max(1.5rem, calc((100% - 1120px) / 2 + 1.5rem)); bottom:1.75rem; pointer-events:none;
+    font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-size:13px; line-height:1.5; color:#94A3B8; transition:opacity .6s; }
+  .cx-hint b { color:#00f0ff; font-weight:500; }
+  .cx-hint.gone { opacity:0; }
+
   /* hero intro: lines slide up once on load */
   .intro > * { opacity:0; transform:translateY(18px); animation:introUp .8s cubic-bezier(.2,.7,.2,1) forwards; }
   .intro > *:nth-child(2){animation-delay:.12s} .intro > *:nth-child(3){animation-delay:.24s}
@@ -619,6 +640,27 @@ const FIBERS = {
   glowFalloff: 10, glowIntensity: 1.6, brightness: 2, blueBoost: 1.0,
   vignette: 0.8, grain: 0.05, dpr: 1, lightMode: false, fps: 60, paused: false
 };
+/* Hero background on wide screens: a 3D circuit board to play with (Three.js, loaded from a CDN).
+   Every project frame in the story is a chip (click = go to that frame). Drag = turn the board (springs back),
+   click the board = ripple of current, PWR switch = power on/off, click an LED = next colour.
+   Screens narrower than minWidth (phones), or if Three.js can't load, get FIBERS instead.
+   enabled: false -> FIBERS everywhere. */
+const CIRCUIT = {
+  enabled: true, minWidth: 1024,
+  three: "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+  seed: 7,                    // same seed = same board every visit; change it for a different layout
+  tilt: 52, fov: 38,          // how far the board leans back (degrees), camera lens
+  chipScale: 1,               // chip size (shrinks by itself if the chips don't fit around the name and photo)
+  parallax: 1.2, spin: 25,    // how much the camera follows the pointer; max degrees a drag turns the board
+  turn: 0.16,                 // how often traces bend (0..1)
+  pulseSpeed: 3, pulseSpacing: 7, pulseDensity: 0.45,   // current pulses; density = share of traces carrying them
+  mouseRadius: 3.2,           // size of the glow around the pointer (board units)
+  colors: { bg: "#05070b", board: "#07121a", trace: "#0e3442", glow: "#00f0ff", deep: "#0066ff",
+            chipTop: "#0a131b", chipSide: "#0b1a24", pin: "#5d7f8c", knob: "#cfe9f2", silk: "#8fb3c2" },
+  ledColors: ["#00f0ff", "#0066ff", "#38bdf8", "#e0fdff"],
+  hint: "ลากเพื่อหมุนบอร์ด · คลิกชิปเพื่อดูโปรเจกต์ · กดสวิตช์ PWR",
+  dpr: 1.5, fps: 60
+};
 /* Moving grid behind every frame except the first. Same setting names as the React "ShapeGrid" props.
    direction: up, down, left, right, diagonal.  fadeTo: colour the edges fade into (page background).
    enabled: false -> plain dark background. */
@@ -1052,7 +1094,465 @@ function ghostFibers(canvas, o) {
   }).observe(canvas);
   raf = requestAnimationFrame(loop);
 }
-if (FIBERS.enabled) { try { ghostFibers(document.getElementById("fibers"), FIBERS); } catch (e) { console.error("[fibers]", e); } }
+let fibersOn = false;
+const startFibers = () => {
+  if (fibersOn || !FIBERS.enabled) return; fibersOn = true;
+  try { ghostFibers(document.getElementById("fibers"), FIBERS); } catch (e) { console.error("[fibers]", e); }
+};
+
+/* ---------- hero 3D circuit board (Three.js, wide screens only) ----------
+   Board and traces are two small shaders: current pulses, the glow around the pointer and click ripples are
+   all worked out there, so they cost no JavaScript per frame. Chips = the project frames in SITE. */
+async function circuitHero(wrap, o, fallback) {
+  const THREE = await import(o.three);
+  await new Promise((ok) => (document.readyState === "complete" ? ok() : addEventListener("load", ok, { once: true })));
+  if (document.fonts) await Promise.all([document.fonts.load('700 40px "JetBrains Mono"'),
+    document.fonts.load('600 40px "Noto Sans Thai"', "ก")]).catch(() => {});
+  await new Promise((ok) => setTimeout(ok, 0));   // let the frames (HS) finish moving the hero first
+
+  THREE.ColorManagement.enabled = false;      // config colours are used exactly as written
+  const canvas = document.createElement("canvas"); canvas.id = "circuit"; canvas.setAttribute("aria-hidden", "true");
+  wrap.querySelector(".fade").before(canvas);
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); }
+  catch (e) { canvas.remove(); throw e; }
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setClearColor(o.colors.bg);
+  renderer.setPixelRatio(Math.min(o.dpr || 1, devicePixelRatio || 1));
+
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const D = 24, G = 0.5, TILT = -o.tilt * Math.PI / 180;   // camera distance, trace grid step, board lean
+  const CW = 3, CH = 1.5, CT = 0.3;                         // chip size (board units)
+  const DIRS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const C = (h) => new THREE.Color(h);
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(o.fov, 1, 0.5, 400);
+  const board = new THREE.Group(); board.rotation.x = TILT; scene.add(board);
+  const rng = (a) => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // one chip per project frame, same ids as the header tabs
+  const projects = [["story", SITE.story], ["after", SITE.storyAfter]].flatMap(([prefix, list]) => (list || [])
+    .map((s, i) => (s.kind === "project" ? { id: `${prefix}-${i + 1}`, title: s.title, tag: (s.tags || [])[0] || "" } : null))
+    .filter(Boolean));
+
+  /* shaders: board, traces and vias share the same uniform objects */
+  const U = {
+    uTime: { value: 0 }, uFlow: { value: 0 }, uPower: { value: 0 }, uNear: { value: 28 }, uFar: { value: 60 },
+    uMouse: { value: new THREE.Vector2(1e4, 1e4) }, uMouseOn: { value: 0 }, uMouseR: { value: o.mouseRadius },
+    uRip: { value: [0, 1, 2, 3].map(() => new THREE.Vector4(0, 0, -99, 0)) },
+    uBg: { value: C(o.colors.bg) }, uBoard: { value: C(o.colors.board) }, uTrace: { value: C(o.colors.trace) },
+    uGlow: { value: C(o.colors.glow) }, uDeep: { value: C(o.colors.deep) }
+  };
+  const VS = (head, body) => `varying vec2 vB; varying float vDepth; ${head}
+    void main() { ${body} vB = position.xy; vec4 mv = modelViewMatrix * vec4(position, 1.); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`;
+  const FS = `
+    uniform float uTime, uFlow, uPower, uMouseOn, uMouseR, uNear, uFar; uniform vec2 uMouse; uniform vec4 uRip[4];
+    uniform vec3 uBg, uBoard, uTrace, uGlow, uDeep; varying vec2 vB; varying float vDepth;
+    float nearM() { vec2 d = vB - uMouse; return exp(-dot(d, d) / (uMouseR * uMouseR)) * uMouseOn; }
+    float ripple() { float s = 0.; for (int i = 0; i < 4; i++) { vec4 r = uRip[i]; float a = uTime - r.z;
+      if (a > 0. && a < 2.6) { float d = distance(vB, r.xy) - a * 9.; s += exp(-d * d * 1.2) * (1. - a / 2.6) * r.w; } } return s; }
+    float fadeD() { return smoothstep(uFar, uNear, vDepth); }`;
+  const glowMat = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide };
+  const boardMat = new THREE.ShaderMaterial({ uniforms: { ...U, uDot: { value: 1 } }, depthWrite: false,
+    vertexShader: VS("", ""),
+    fragmentShader: FS + `uniform float uDot; void main() { vec3 c = uBoard;
+      vec2 q = fract(vB / uDot) - .5; float w = fwidth(vB.x / uDot);
+      c += uTrace * (1. - smoothstep(.07 - w, .07 + w, length(q))) * .5;            // silkscreen dot grid
+      c += uGlow * (nearM() * .06 + ripple() * .05) * uPower;
+      gl_FragColor = vec4(mix(uBg, c, fadeD()), 1.); }` });
+  const traceMat = new THREE.ShaderMaterial({ ...glowMat,
+    uniforms: { ...U, uCore: { value: 0.24 }, uSpeed: { value: o.pulseSpeed }, uSpacing: { value: o.pulseSpacing }, uDensity: { value: o.pulseDensity } },
+    vertexShader: VS("attribute float aSide, aDist, aSeed; varying float vSide, vDist, vSeed;", "vSide = aSide; vDist = aDist; vSeed = aSeed;"),
+    fragmentShader: FS + `uniform float uCore, uSpeed, uSpacing, uDensity; varying float vSide, vDist, vSeed;
+      void main() { float s = abs(vSide), m = nearM(), r = ripple();
+        float core = 1. - smoothstep(uCore * .6, uCore * 1.3, s), halo = pow(1. - s, 3.);
+        float u = (vDist - uFlow * uSpeed * (.65 + .7 * vSeed)) / uSpacing + vSeed * 17.;
+        float p = pow(fract(u), 14.) * min(1., step(vSeed, uDensity) + m * 1.5);   // comet-shaped pulse, more near the pointer
+        float e = uPower * (.15 + p * 1.8 + m * .8 + r * 1.3);
+        vec3 hot = mix(uDeep, uGlow, clamp(e * .9, 0., 1.));
+        vec3 c = uTrace * core * (.7 + .5 * uPower) + hot * (core * e * 1.3 + halo * e * .4);
+        gl_FragColor = vec4(c * fadeD(), 1.); }` });
+  const viaMat = new THREE.ShaderMaterial({ ...glowMat, uniforms: U, vertexShader: VS("", ""),
+    fragmentShader: FS + `void main() { float e = uPower * (.25 + nearM() * .9 + ripple() * 1.3);
+      gl_FragColor = vec4((uTrace * 1.3 + mix(uDeep, uGlow, clamp(e, 0., 1.)) * e * .8) * fadeD(), 1.); }` });
+  const shared = [boardMat, traceMat, viaMat];
+
+  /* canvas textures: soft glow, chip tops, silkscreen text */
+  const texOf = (w, h, draw) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; };
+  const glowTex = texOf(128, 128, (x) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.35, "rgba(255,255,255,.35)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); });
+  const font = (wt, px) => `${wt} ${px}px "JetBrains Mono","Noto Sans Thai",monospace`;
+  const chipTex = (title, tag) => texOf(512, 256, (x, w, h) => {
+    x.fillStyle = o.colors.chipTop; x.fillRect(0, 0, w, h);
+    x.strokeStyle = "rgba(0,240,255,.22)"; x.lineWidth = 3; x.strokeRect(16, 16, w - 32, h - 32);
+    x.fillStyle = "rgba(0,240,255,.45)"; x.beginPath(); x.arc(40, 40, 8, 0, Math.PI * 2); x.fill();   // pin-1 dot
+    let fs = 64; x.font = font(700, fs);
+    while (fs > 20 && x.measureText(title).width > w - 80) x.font = font(700, --fs);
+    x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = "#E6F6FB";
+    x.fillText(title, w / 2, tag ? h * 0.42 : h / 2);
+    if (tag) { x.font = font(500, Math.round(fs * 0.5)); x.fillStyle = "#38BDF8"; x.fillText(tag, w / 2, h * 0.42 + fs * 0.85); }
+  });
+  const basic = (opt) => new THREE.MeshBasicMaterial(opt);
+  const glowPlane = (w, h, color, opacity) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), basic({ ...glowMat, map: glowTex, color, opacity }));
+
+  const dispose = (root) => root.traverse((m) => {
+    if (m.isInstancedMesh) m.dispose();
+    if (m.geometry) m.geometry.dispose();
+    [].concat(m.material || []).forEach((x) => { if (shared.includes(x)) return; if (x.map && x.map !== glowTex) x.map.dispose(); x.dispose(); });
+  });
+
+  /* build the board for the current screen size: chips go into the open space around the name and photo */
+  let content = null, picks = [], chips = [], leds = [], knob = null, ctlAt = null, W = 1, H = 1, booted = false;
+  function build() {
+    if (content) { board.remove(content); dispose(content); }
+    content = new THREE.Group(); board.add(content);
+    picks = []; chips = []; leds = []; knob = null; ctlAt = null;
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    renderer.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
+    board.rotation.set(TILT, 0, 0); cam.position.set(0, 0, D); cam.lookAt(0, 0, 0);
+    board.updateMatrixWorld(); cam.updateMatrixWorld();
+    const rnd = rng(o.seed);
+
+    // screen px -> point on the board (board units)
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1).applyQuaternion(board.quaternion), 0), ray = new THREE.Raycaster();
+    const toBoard = (x, y) => { ray.setFromCamera(new THREE.Vector2(x / W * 2 - 1, 1 - y / H * 2), cam);
+      const p = ray.ray.intersectPlane(plane, new THREE.Vector3()); return p && board.worldToLocal(p); };
+    const scaleAt = (p) => board.localToWorld(p.clone()).distanceTo(cam.position) / D;   // far chips grow so all look the same size
+
+    // area to fill with traces; far away the board fades into the background
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const [u, v] of [[-0.1, -0.05], [1.1, -0.05], [-0.1, 1.05], [1.1, 1.05]]) {
+      const p = toBoard(u * W, v * H) || new THREE.Vector3(u < 0.5 ? -45 : 45, 45, 0);
+      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+    }
+    x0 = Math.max(x0, -45); x1 = Math.min(x1, 45); y0 = Math.max(y0, -45); y1 = Math.min(y1, 45);
+    const topP = toBoard(W / 2, 0);
+    U.uNear.value = D * 1.15; U.uFar.value = Math.max(D * 1.7, topP ? scaleAt(topP) * D * 1.15 : 60);
+
+    // spots (screen px) that keep clear of the name block and the photo; farthest-point picks spread them out
+    const wr = wrap.getBoundingClientRect(), sx = W / wr.width, sy = H / wr.height;
+    const rel = (r) => ({ l: (r.left - wr.left) * sx, t: (r.top - wr.top) * sy, r: (r.right - wr.left) * sx, b: (r.bottom - wr.top) * sy });
+    const blocks = [];
+    const kids = [...wrap.querySelectorAll("#hero > *")].map((el) => rel(el.getBoundingClientRect()));
+    if (kids.length) blocks.push(kids.reduce((a, k) => ({ l: Math.min(a.l, k.l), t: Math.min(a.t, k.t), r: Math.max(a.r, k.r), b: Math.max(a.b, k.b) })));
+    const photo = wrap.querySelector(".hero-photo");
+    if (photo) { const r = rel(photo.getBoundingClientRect()), cut = (r.r - r.l) * 0.18; blocks.push({ ...r, l: r.l + cut, r: r.r - cut }); }
+    const upp = 2 * D * Math.tan(o.fov * Math.PI / 360) / H;   // board units per px in the middle of the screen
+    const n = projects.length + 1;                              // + the power switch / LED block
+    let s0 = o.chipScale, spots = [];
+    for (;;) {
+      const wp = CW * s0 / upp, hp = (CH + 0.9) * s0 / upp * Math.cos(TILT), cand = [];
+      for (let y = Math.max(56 + hp / 2 + 40, H * 0.2); y <= H * 0.86 - hp / 2; y += 20)   // not too far back (flat, under the header)
+        for (let x = wp / 2 + 28; x <= W - wp / 2 - 28; x += 20)
+          if (!blocks.some((b) => x > b.l - wp / 2 - 16 && x < b.r + wp / 2 + 16 && y > b.t - hp / 2 - 16 && y < b.b + hp / 2 + 16)) cand.push([x, y]);
+      spots = [];
+      if (cand.length) {
+        const gap = (a, b) => Math.hypot((a[0] - b[0]) / (wp * 1.3), (a[1] - b[1]) / (hp * 2.4));
+        const ax = blocks.length > 1 ? (blocks[0].r + blocks[1].l) / 2 : W * 0.55, ay = H * 0.45;   // start between name and photo
+        spots.push(cand.reduce((a, c) => (Math.hypot(c[0] - ax, c[1] - ay) < Math.hypot(a[0] - ax, a[1] - ay) ? c : a)));
+        while (spots.length < n) {
+          let best = null, bd = 0;
+          for (const c of cand) { const d = Math.min(...spots.map((s) => gap(c, s))); if (d > bd) { bd = d; best = c; } }
+          if (bd < 1) break; spots.push(best);
+        }
+      }
+      if (spots.length >= n || s0 < 0.6) break;
+      s0 *= 0.9;
+    }
+    if (spots.length < n) console.warn(`[circuit] room for ${spots.length} of ${n} parts on this screen`);
+    // switch block goes bottom-left (next to the hint); chips get the rest in reading order
+    let ci = 0; spots.forEach((s, i) => { if (s[0] / W - s[1] / H < spots[ci][0] / W - spots[ci][1] / H) ci = i; });
+    const ctlSpot = spots.length ? spots.splice(ci, 1)[0] : null;
+    spots.sort((a, b) => Math.round(a[1] / (H * 0.2)) - Math.round(b[1] / (H * 0.2)) || a[0] - b[0]);
+
+    // trace router: 8 directions on a grid, nodes can't be shared and diagonals can't cross
+    const taken = new Set(), node = (v) => Math.round(v / G), key = (x, y) => node(x) + "," + node(y);
+    const inside = (x, y) => x > x0 && x < x1 && y > y0 && y < y1;
+    const free = (x, y) => inside(x, y) && !taken.has(key(x, y));
+    const block = (cx, cy, hw, hh) => { for (let i = node(cx - hw); i <= node(cx + hw); i++) for (let j = node(cy - hh); j <= node(cy + hh); j++) taken.add(i + "," + j); };
+    const move = (x, y, d) => { const [dx, dy] = DIRS[d], nx = x + dx * G, ny = y + dy * G;
+      if (!free(nx, ny)) return null;
+      const dk = dx && dy ? "d" + Math.min(node(x), node(nx)) + "," + Math.min(node(y), node(ny)) : null;
+      return dk && taken.has(dk) ? null : [nx, ny, dk]; };
+    const walk = (x, y, d, steps, plan, run = 0) => {
+      const pts = [[x, y]]; taken.add(key(x, y)); let moved = 0;
+      for (let s = 0; s < steps; s++) {
+        let nd = d;
+        if (plan) nd = (d + (plan[s] || 0) + 8) % 8;
+        else if (run >= 3 && rnd() < o.turn) nd = (d + (rnd() < 0.5 ? 1 : 7)) % 8;
+        let m = move(x, y, nd);
+        if (!m && !plan) for (const a of rnd() < 0.5 ? [1, 7] : [7, 1]) { nd = (d + a) % 8; if ((m = move(x, y, nd))) break; }
+        if (!m) break;
+        if (nd !== d) { if (moved) pts.push([x, y]); d = nd; run = 0; }
+        x = m[0]; y = m[1]; taken.add(key(x, y)); if (m[2]) taken.add(m[2]); run++; moved++;
+      }
+      if (moved < 2) return null;
+      pts.push([x, y]); return pts;
+    };
+    const traces = [], starts = [];
+    const add = (pts, v0, v1) => { if (pts) traces.push({ pts, seed: rnd(), v0, v1 }); };
+
+    // chips
+    const m4 = new THREE.Matrix4();
+    spots.slice(0, projects.length).forEach((sp, i) => {
+      const p = toBoard(sp[0], sp[1]); if (!p) return;
+      const s = s0 * scaleAt(p), pr = projects[i];
+      const g = new THREE.Group(); g.position.set(p.x, p.y, 0); g.scale.setScalar(s); content.add(g);
+      const lift = new THREE.Group(); g.add(lift);
+      const side = basic({ color: o.colors.chipSide });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(CW, CH, CT), [side, side, side, side, basic({ map: chipTex(pr.title, pr.tag) }), side]);
+      body.position.z = CT / 2; body.userData = { kind: "chip", i: chips.length };
+      const edge = new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry), new THREE.LineBasicMaterial({ color: o.colors.trace }));
+      body.add(edge);
+      const pins = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 0.4, 0.06), basic({ color: o.colors.pin }), 14);
+      for (let k = 0; k < 7; k++) for (const sgn of [-1, 1]) pins.setMatrixAt(k * 2 + (sgn > 0), m4.makeTranslation((k - 3) * CW / 8, sgn * (CH / 2 + 0.12), 0.05));
+      const glow = glowPlane(CW * 1.9, CH * 2.6, o.colors.glow, 0); glow.position.z = 0.01;
+      lift.add(body, pins); g.add(glow); picks.push(body);
+      chips.push({ g, lift, body, edge, glow, pr, h: 0 });
+      block(p.x, p.y, (CW / 2 + 0.1) * s, (CH / 2 + 0.25) * s);
+      for (const k of [0, 2, 4, 6]) for (const sgn of [-1, 1])   // traces leave from every other pin
+        starts.push({ x: p.x + (k - 3) * CW / 8 * s, y: p.y + sgn * (CH / 2 + 0.75) * s, tip: p.y + sgn * (CH / 2 + 0.32) * s, d: sgn > 0 ? 2 : 6 });
+    });
+
+    // power switch + status LEDs, with silkscreen labels above
+    if (ctlSpot) {
+      const p = toBoard(ctlSpot[0], ctlSpot[1]);
+      if (p) {
+        const s = s0 * scaleAt(p); p.x += 0.4 * s;   // this block is wider than a chip: keep the switch off the screen edge
+        const g = new THREE.Group(); g.position.set(p.x, p.y, 0); g.scale.setScalar(s); content.add(g);
+        ctlAt = p;
+        const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.62, 0.22), basic({ color: o.colors.chipSide }));
+        base.position.set(-1.05, 0, 0.11);
+        knob = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.46, 0.3), basic({ color: o.colors.knob }));
+        knob.position.set(-1.05 + (powerOn ? 0.3 : -0.3), 0, 0.2);
+        base.userData = knob.userData = { kind: "switch" }; picks.push(base, knob); g.add(base, knob);
+        for (let i = 0; i < 5; i++) {
+          const l = { c: i % o.ledColors.length, blink: rnd() }; l.col = C(o.ledColors[l.c]);
+          l.body = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.16), basic({ color: l.col.clone() }));
+          l.body.position.set(0.3 + i * 0.42, 0, 0.08); l.body.userData = { kind: "led", i };
+          l.halo = glowPlane(1.1, 1.1, l.col.clone(), 0); l.halo.position.set(l.body.position.x, 0, 0.02);
+          g.add(l.body, l.halo); picks.push(l.body); leds.push(l);
+        }
+        const silk = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.5), basic({ transparent: true, depthWrite: false,
+          map: texOf(512, 68, (x, w, h) => { x.font = font(600, 30); x.fillStyle = o.colors.silk; x.textAlign = "center"; x.textBaseline = "middle";
+            x.fillText("PWR", w * 0.197, h / 2); x.fillText(SITE.brand || "", w * 0.774, h / 2); }) }));
+        silk.position.set(0.1, 0.62, 0.005); g.add(silk);
+        block(p.x + 0.1 * s, p.y + 0.1 * s, 1.95 * s, 0.85 * s);
+        for (const x of [-1.3, -0.8, 0.3, 0.72, 1.14, 1.56]) starts.push({ x: p.x + x * s, y: p.y - 1.45 * s, tip: p.y - 0.2 * s, d: 6 });
+      }
+    }
+
+    // traces: from the parts first, then buses (parallel traces that turn together), then single traces
+    for (const st of starts) if (free(st.x, st.y)) {
+      const pts = walk(st.x, st.y, st.d, 10 + (rnd() * 26 | 0), null, -2);
+      if (pts) { pts.unshift([st.x, st.tip]); add(pts, false, true); }
+    }
+    const area = (x1 - x0) * (y1 - y0), dirAny = () => (rnd() * 4 | 0) * 2 + (rnd() < 0.3 ? 1 : 0);
+    for (let b = 0, nb = Math.min(60, area / 45 | 0); b < nb; b++) {
+      const x = node(x0 + rnd() * (x1 - x0)) * G, y = node(y0 + rnd() * (y1 - y0)) * G, d = dirAny();
+      const steps = 10 + (rnd() * 34 | 0), plan = [];
+      for (let s = 0, run = 0; s < steps; s++) { if (run >= 4 && rnd() < o.turn) { plan[s] = rnd() < 0.5 ? 1 : -1; run = 0; } else run++; }
+      const [px, py] = DIRS[(d + 2) % 8];
+      for (let l = 0, lanes = 2 + (rnd() * 4 | 0); l < lanes; l++) {
+        const lx = x + px * G * l, ly = y + py * G * l;
+        if (free(lx, ly)) add(walk(lx, ly, d, steps, plan), true, true);
+      }
+    }
+    for (let k = 0, ns = Math.min(140, area / 28 | 0); k < ns; k++) {
+      const x = node(x0 + rnd() * (x1 - x0)) * G, y = node(y0 + rnd() * (y1 - y0)) * G;
+      if (free(x, y)) add(walk(x, y, dirAny(), 4 + (rnd() * 22 | 0)), true, true);
+    }
+
+    // trace ribbons: centre line + soft halo in one strip (aSide -1..1 across it), mitred at the bends
+    const HW = 0.22, P = [], S = [], Dd = [], Sd = [], I = [], VP = [], VI = [];
+    const unit = (x, y) => { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; };
+    const via = (x, y) => { const b = VP.length / 3;
+      for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a);
+        VP.push(x + c * 0.1, y + sn * 0.1, 0.03, x + c * 0.19, y + sn * 0.19, 0.03);
+        const i0 = b + k * 2, i1 = b + ((k + 1) % 12) * 2; VI.push(i0, i0 + 1, i1, i1, i0 + 1, i1 + 1); } };
+    for (const t of traces) {
+      const pts = t.pts, n2 = pts.length, base = P.length / 3; let dist = 0;
+      for (let k = 0; k < n2; k++) {
+        const [x, y] = pts[k];
+        if (k) dist += Math.hypot(x - pts[k - 1][0], y - pts[k - 1][1]);
+        const a = k ? unit(x - pts[k - 1][0], y - pts[k - 1][1]) : unit(pts[1][0] - x, pts[1][1] - y);
+        const b = k < n2 - 1 ? unit(pts[k + 1][0] - x, pts[k + 1][1] - y) : a;
+        const [tx, ty] = unit(a[0] + b[0], a[1] + b[1]), nx = -ty, ny = tx;
+        const m = HW / Math.max(0.5, -nx * a[1] + ny * a[0]);
+        P.push(x + nx * m, y + ny * m, 0.02, x - nx * m, y - ny * m, 0.02);
+        S.push(1, -1); Dd.push(dist, dist); Sd.push(t.seed, t.seed);
+        if (k) { const v = base + k * 2; I.push(v - 2, v - 1, v, v - 1, v + 1, v); }
+      }
+      if (t.v0) via(...pts[0]);
+      if (t.v1) via(...pts[n2 - 1]);
+    }
+    const tg = new THREE.BufferGeometry();
+    tg.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+    tg.setAttribute("aSide", new THREE.Float32BufferAttribute(S, 1));
+    tg.setAttribute("aDist", new THREE.Float32BufferAttribute(Dd, 1));
+    tg.setAttribute("aSeed", new THREE.Float32BufferAttribute(Sd, 1));
+    tg.setIndex(I);
+    const vg = new THREE.BufferGeometry(); vg.setAttribute("position", new THREE.Float32BufferAttribute(VP, 3)); vg.setIndex(VI);
+    const bg = new THREE.PlaneGeometry(Math.min(160, (x1 - x0) * 1.6), Math.min(160, (y1 - y0) * 1.6));
+    bg.translate((x0 + x1) / 2, (y0 + y1) / 2, 0);
+    const boardMesh = new THREE.Mesh(bg, boardMat); boardMesh.renderOrder = -1;
+    content.add(boardMesh, new THREE.Mesh(tg, traceMat), new THREE.Mesh(vg, viaMat));
+
+    if (!booted && ctlAt) { booted = true; ripple(ctlAt.x, ctlAt.y, 1.4, bootAt); }   // first power-on sends a wave out from PWR
+  }
+
+  /* interaction */
+  const tip = document.createElement("div"); tip.className = "cx-tip"; tip.setAttribute("aria-hidden", "true");
+  const hint = document.createElement("div"); hint.className = "cx-hint"; hint.setAttribute("aria-hidden", "true");
+  hint.innerHTML = `<b>//</b> ${esc(o.hint)}`;
+  wrap.append(tip, hint); wrap.classList.add("cx-on");
+  let t = 0, last = 0, ri = 0, px = 0, py = 0, cx = 0, cy = 0, inside = false, lastMove = -1e9, drag = null, hot = null;
+  let power = 0, powerOn = true, bootAt = still ? 0 : 0.4, hidden = false, onScreen = true;
+  const spin = { z: 0, x: 0, vz: 0, vx: 0, tz: 0, tx: 0 };
+  const ripple = (x, y, s, at = t) => U.uRip.value[ri++ % 4].set(x, y, at, s);
+  const played = () => hint.classList.add("gone");
+  const off = () => { const pn = canvas.closest(".hs-panel"); return hidden || !onScreen || !!(pn && pn.classList.contains("hs-off")); };
+  const local = (e) => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(), nrm = new THREE.Vector3();
+  const hitW = new THREE.Vector3(), tipW = new THREE.Vector3();
+  let hitB = null;
+  function setHot(obj) {
+    if (obj === hot) return;
+    hot = obj; wrap.classList.toggle("cx-hot", !!obj);
+    if (!obj) { tip.classList.remove("on"); return; }
+    const u = obj.userData;
+    tip.innerHTML = u.kind === "chip" ? `<b>${esc(chips[u.i].pr.title)}</b><span>คลิกเพื่อไปที่โปรเจกต์ →</span>`
+      : u.kind === "switch" ? `<b>PWR</b><span>${powerOn ? "คลิกเพื่อปิดไฟบอร์ด" : "คลิกเพื่อเปิดไฟบอร์ด"}</span>`
+      : `<b>LED</b><span>คลิกเพื่อเปลี่ยนสี</span>`;
+    tip.classList.add("on");
+    if (u.kind === "chip") { const g = chips[u.i].g.position; ripple(g.x, g.y, 0.5); }
+  }
+  function pick() {
+    hitB = null;
+    if (!inside && !drag) { setHot(null); return; }
+    ndc.set(px / W * 2 - 1, 1 - py / H * 2); ray.setFromCamera(ndc, cam);
+    const h = ray.intersectObjects(picks, false)[0];
+    setHot(h && !(drag && drag.moved) ? h.object : null);
+    plane.setFromNormalAndCoplanarPoint(nrm.set(0, 0, 1).applyQuaternion(board.quaternion), board.position);
+    if (ray.ray.intersectPlane(plane, hitW)) hitB = board.worldToLocal(hitW);
+  }
+  function click() {
+    played();
+    if (hot) {
+      const u = hot.userData;
+      if (u.kind === "chip") {
+        const c = chips[u.i]; ripple(c.g.position.x, c.g.position.y, 1.2);
+        const a = document.querySelector(`#nav a[data-target="${c.pr.id}"]`);
+        setTimeout(() => (a ? a.click() : (location.hash = c.pr.id)), 220);   // nav link = frames play their transition
+      } else if (u.kind === "switch") {
+        powerOn = !powerOn;
+        if (powerOn) { bootAt = t; if (ctlAt) ripple(ctlAt.x, ctlAt.y, 1.4); }
+        setHot(null);   // tooltip text changes (on/off); the next frame picks it up again
+      } else {
+        const l = leds[u.i]; l.c = (l.c + 1) % o.ledColors.length; l.col.set(o.ledColors[l.c]); l.halo.material.color.copy(l.col);
+        if (ctlAt) ripple(ctlAt.x, ctlAt.y, 0.5);
+      }
+      return;
+    }
+    if (hitB) ripple(hitB.x, hitB.y, 1);
+  }
+
+  wrap.addEventListener("pointermove", (e) => {
+    [px, py] = local(e); inside = true; lastMove = performance.now();
+    if (!drag || drag.touch) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) > 6) { drag.moved = true; wrap.classList.add("cx-drag"); played(); }
+    if (drag.moved) { const lim = o.spin * Math.PI / 180;
+      spin.tz = Math.max(-lim, Math.min(lim, drag.z + dx * 0.006));
+      spin.tx = Math.max(-lim / 2, Math.min(lim / 2, drag.xx + dy * 0.003)); }
+  });
+  wrap.addEventListener("pointerleave", () => { inside = false; });
+  wrap.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || e.target.closest("a, button") || off()) return;
+    drag = { x: e.clientX, y: e.clientY, z: spin.z, xx: spin.x, moved: false, touch: e.pointerType === "touch" };
+    [px, py] = local(e); inside = true;
+    if (!drag.touch) { e.preventDefault(); try { wrap.setPointerCapture(e.pointerId); } catch (_) {} }   // touch keeps swiping between frames
+  });
+  const up = (e) => {
+    if (!drag) return;
+    const d = drag; drag = null; wrap.classList.remove("cx-drag");
+    spin.tz = spin.tx = 0;   // let go: the board springs back
+    if (d.moved || e.type === "pointercancel") return;
+    [px, py] = local(e); pick(); click();
+  };
+  wrap.addEventListener("pointerup", up); wrap.addEventListener("pointercancel", up);
+
+  /* loop: runs only while the hero is on screen */
+  const edgeA = C(o.colors.trace), edgeB = C(o.colors.glow), stepMs = 1000 / (o.fps || 60);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (off() || now - last < stepMs - 1) return;
+    const dt = Math.min(0.05, last ? (now - last) / 1000 : 0); last = now; t += dt;
+
+    // camera follows the pointer a little; slow sway when the pointer is idle
+    let mx = 0, my = 0;
+    if ((inside && now - lastMove < 3000) || drag) { mx = px / W * 2 - 1; my = py / H * 2 - 1; }
+    else if (!still) { mx = Math.sin(t * 0.23) * 0.5; my = Math.cos(t * 0.17) * 0.35; }
+    cx += (mx - cx) * 0.05; cy += (my - cy) * 0.05;
+    cam.position.set(cx * o.parallax, -cy * o.parallax * 0.6, D); cam.lookAt(0, 0, 0);
+
+    // drag turns the board; let go and it springs back with a little overshoot
+    const held = !!(drag && drag.moved);
+    spin.vz = (spin.vz + (spin.tz - spin.z) * (held ? 0.35 : 0.08)) * (held ? 0.5 : 0.82); spin.z += spin.vz;
+    spin.vx = (spin.vx + (spin.tx - spin.x) * (held ? 0.35 : 0.08)) * (held ? 0.5 : 0.82); spin.x += spin.vx;
+    board.rotation.set(TILT + spin.x, 0, spin.z);
+    board.updateMatrixWorld(); cam.updateMatrixWorld();
+
+    // power: flickers on when switched on, fades when switched off
+    if (still) power = powerOn ? 1 : 0;
+    else if (powerOn && t - bootAt < 1.1) { const k = Math.max(0, (t - bootAt) / 1.1); power = k < 0.85 ? k * (Math.sin(t * 60) > -0.2 ? 1 : 0.35) : k; }
+    else power += ((powerOn ? 1 : 0) - power) * 0.12;
+    U.uPower.value = power; U.uTime.value = t; U.uFlow.value = still ? 0 : t;
+
+    pick();
+    U.uMouseOn.value += ((inside && hitB ? 1 : 0) - U.uMouseOn.value) * 0.08;
+    if (hitB) U.uMouse.value.set(hitB.x, hitB.y);
+
+    for (const c of chips) {
+      c.h += ((hot === c.body ? 1 : 0) - c.h) * 0.18;
+      c.lift.position.z = c.h * 0.5;
+      c.edge.material.color.copy(edgeA).lerp(edgeB, Math.max(c.h, power * 0.25));
+      c.glow.material.opacity = power * (0.14 + 0.7 * c.h);
+    }
+    if (knob) knob.position.x += ((powerOn ? -0.75 : -1.35) - knob.position.x) * 0.25;
+    for (const l of leds) {
+      const b = power * (still ? 1 : Math.sin(t * (2 + l.blink * 5) + l.blink * 40) > -0.3 ? 1 : 0.25);
+      l.body.material.color.copy(l.col).multiplyScalar(0.25 + 0.75 * b);
+      l.halo.material.opacity = Math.min(1, 0.75 * b * (hot === l.body ? 1.4 : 1));
+    }
+    if (hot) {   // tooltip sits above the part under the pointer
+      hot.getWorldPosition(tipW).project(cam);
+      tip.style.transform = `translate(${(tipW.x + 1) / 2 * W}px, ${(1 - tipW.y) / 2 * H - 22}px) translate(-50%, -100%)`;
+    }
+    renderer.render(scene, cam);
+  }
+
+  build();
+  renderer.render(scene, cam); canvas.classList.add("on");
+  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; }).observe(canvas);
+  requestAnimationFrame(frame);
+
+  // resize: rebuild for the new screen; narrow screens switch to the fiber background
+  let rt;
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => {
+    const narrow = innerWidth < o.minWidth;
+    if (narrow !== hidden) { hidden = narrow; canvas.style.display = hint.style.display = narrow ? "none" : "";
+      wrap.classList.toggle("cx-on", !narrow); if (narrow) { setHot(null); fallback(); } }
+    if (!hidden && (canvas.clientWidth !== W || canvas.clientHeight !== H)) build();
+  }, 200); });
+}
+
+if (CIRCUIT.enabled && innerWidth >= CIRCUIT.minWidth)
+  circuitHero(document.getElementById("hero-wrap"), CIRCUIT, startFibers).catch((e) => { console.error("[circuit]", e); startFibers(); });
+else startFibers();
 
 /* ---------- moving square grid behind every frame except the first (ShapeGrid look, square shape) ----------
    Drawn with CSS gradients instead of a canvas per frame (a full-screen canvas for each of ~15 frames would
