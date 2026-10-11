@@ -291,6 +291,79 @@
     text-shadow:0 0 8px rgba(0,240,255,.7); opacity:0; transition:opacity .2s, transform .2s; }
   #hero-wrap .stk-tip.on { opacity:1; transform:translate(-50%,0); }
 
+  /* Hall of Fame (SITE.certs). Normal scrolling: heading + grid of hologram cards. Frames mode: the 3D hall
+     (#hall-gl, inside the frame) does the showing; the heading sits centred at the door and moves to the top-left
+     inside the hall, the HUD (bottom-left) names the certificate in front of you. */
+  .hall { position:relative; padding:5rem 0; }
+  .hall-wrap { position:relative; z-index:1; }
+  .hall-eyebrow { font-family:"JetBrains Mono",monospace; font-size:13px; color:#00f0ff; }
+  .hall-title { font-family:"JetBrains Mono","Noto Sans Thai",monospace; font-weight:800; font-size:clamp(40px,5.2vw,72px); line-height:1.25; color:#F1F5F9; margin:.3rem 0 .35rem; }
+  .hall-sub { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:17px; line-height:1.7; color:#94A3B8; }
+  .hall .hall-grid { aspect-ratio:auto; max-height:none; margin-top:2.25rem; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.5rem; }
+  .hall-card { position:relative; margin:0; padding:.85rem .85rem 1rem; border:1px solid rgba(0,240,255,.32); border-radius:.6rem; overflow:hidden;
+    background:linear-gradient(180deg, rgba(0,240,255,.07), rgba(0,102,255,.03)); box-shadow:0 0 26px rgba(0,240,255,.1), inset 0 0 30px rgba(0,240,255,.05); }
+  /* scanlines + a light band running down, like the hologram screens */
+  .hall-card::before { content:""; position:absolute; inset:0; z-index:2; pointer-events:none; mix-blend-mode:screen;
+    background:repeating-linear-gradient(0deg, rgba(0,240,255,.05) 0 1px, transparent 1px 3px),
+               linear-gradient(180deg, transparent, rgba(0,240,255,.16), transparent) 0 -60% / 100% 35% no-repeat;
+    animation:hallBand 5s linear infinite; }
+  @keyframes hallBand { to { background-position:0 0, 0 260%; } }
+  /* HUD corner brackets */
+  .hall-card::after { content:""; position:absolute; inset:5px; z-index:2; pointer-events:none;
+    background:linear-gradient(#00f0ff,#00f0ff) 0 0 / 14px 2px, linear-gradient(#00f0ff,#00f0ff) 0 0 / 2px 14px,
+               linear-gradient(#00f0ff,#00f0ff) 100% 0 / 14px 2px, linear-gradient(#00f0ff,#00f0ff) 100% 0 / 2px 14px,
+               linear-gradient(#00f0ff,#00f0ff) 0 100% / 14px 2px, linear-gradient(#00f0ff,#00f0ff) 0 100% / 2px 14px,
+               linear-gradient(#00f0ff,#00f0ff) 100% 100% / 14px 2px, linear-gradient(#00f0ff,#00f0ff) 100% 100% / 2px 14px;
+    background-repeat:no-repeat; opacity:.8; }
+  .hall .hall-grid .hall-pic { position:relative; width:100%; aspect-ratio:1.414; padding:0; opacity:1; transform:none; pointer-events:auto;
+    background:#061520; border:1px solid rgba(0,240,255,.2); box-shadow:none; transition:none; }
+  .hall .hall-grid .hall-pic img { width:100%; height:100%; object-fit:contain; display:block; }
+  .hall-pics { display:grid; gap:.6rem; }
+  .hall-card.is-pair .hall-pics { grid-template-columns:1fr 1fr; }
+  @media (min-width: 640px) { .hall .hall-grid .hall-card.is-pair { grid-column:span 2; } }
+  .hall-list, .hh-list { margin:.1rem 0 .15rem; padding:0; list-style:none; display:flex; flex-direction:column; gap:.1rem; }
+  .hall-list li, .hh-list li { position:relative; padding-left:1rem; font-family:"Noto Sans Thai","Inter",sans-serif; font-size:14px; line-height:1.55; color:#CBD5E1; }
+  .hall-list li::before, .hh-list li::before { content:"▸"; position:absolute; left:0; color:#00f0ff; }
+  .hh-list:empty { display:none; }
+  .hall-card figcaption { display:flex; flex-direction:column; gap:.15rem; margin-top:.75rem; position:relative; z-index:3; }
+  .hall-no, .hh-no { font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.12em; color:#00f0ff; }
+  .hall-name, .hh-name { font-family:"Noto Sans Thai","Inter",sans-serif; font-weight:700; font-size:17px; line-height:1.5; color:#F1F5F9; }
+  .hall-issuer, .hh-issuer { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:14px; line-height:1.6; color:#94A3B8; }
+  .hall-note, .hh-note { font-family:"Noto Sans Thai","Inter",sans-serif; font-size:14px; line-height:1.6; color:#64748B; }
+  .hall-award { font-weight:700; color:#e0fdff; margin-left:.35rem; padding:0 .4rem; border:1px solid rgba(0,240,255,.6); border-radius:.2rem;
+    background:rgba(0,240,255,.12); text-shadow:0 0 8px rgba(0,240,255,.8); }
+  .hall-hud { display:none; }
+  @media (prefers-reduced-motion: reduce) { .hall-card::before { animation:none; } }
+  /* frames mode */
+  html.hs-on .hall-wrap { height:calc(100vh - 100px); }
+  html.hs-on:not(.hall-fail) #certs .hall-grid { display:none; }
+  html.hs-on.hall-fail #certs .hall-grid { display:flex; overflow-x:auto; gap:1rem; margin-top:1.5rem; padding-bottom:.5rem; }
+  html.hs-on.hall-fail #certs .hall-card { flex:0 0 280px; }
+  html.hs-on .hall-head { position:absolute; left:50%; top:50%; width:100%; transform:translate(-50%,-60%); text-align:center; pointer-events:none;
+    transition:left .8s cubic-bezier(.2,.7,.2,1), top .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  html.hs-on .hall-title { font-size:clamp(56px,7.5vw,116px); text-shadow:0 0 34px rgba(0,240,255,.3); transition:font-size .8s cubic-bezier(.2,.7,.2,1); }
+  html.hs-on.hall-fail .hall-head { position:static; transform:none; text-align:left; }
+  html.hs-on.hall-fail .hall-title { font-size:clamp(40px,5.2vw,72px); }
+  html.hs-on #certs.in-hall .hall-head { left:0; top:0; transform:none; width:auto; text-align:left; }
+  html.hs-on #certs.in-hall .hall-title { font-size:30px; }
+  html.hs-on #certs.in-hall .hall-sub { opacity:0; }
+  .hall-sub { transition:opacity .4s; }
+  html.hall-on .hs-panel.hs-hall { background:transparent; }
+  html.hall-on .hs-panel.hs-hall > .panel-bg { display:none; }
+  #hall-gl { position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; }
+  html.hall-on .hall-hud { display:flex; flex-direction:column; gap:.2rem; position:absolute; left:0; bottom:0; width:min(440px, 36vw);
+    padding:1rem 1.25rem 1.1rem; border:1px solid rgba(0,240,255,.38); border-radius:.5rem; background:rgba(4,14,22,.6);
+    box-shadow:0 0 30px rgba(0,240,255,.14), inset 0 0 24px rgba(0,240,255,.06); opacity:0; transform:translateY(14px);
+    transition:opacity .35s ease, transform .35s ease; pointer-events:none; }
+  html.hall-on .hall-hud::after { content:""; position:absolute; inset:-5px; pointer-events:none;
+    background:linear-gradient(#00f0ff,#00f0ff) 0 0 / 16px 2px, linear-gradient(#00f0ff,#00f0ff) 0 0 / 2px 16px,
+               linear-gradient(#00f0ff,#00f0ff) 100% 100% / 16px 2px, linear-gradient(#00f0ff,#00f0ff) 100% 100% / 2px 16px; background-repeat:no-repeat; }
+  html.hall-on .hall-hud.on { opacity:1; transform:none; }
+  html.hall-on .hall-hud.swap { animation:holoOn .7s steps(1) both; }
+  html.hall-on .hh-name { font-size:22px; line-height:1.45; }
+  html.hall-on .hh-issuer { font-size:15px; }
+  .hh-note:empty, .hh-issuer:empty { display:none; }
+
   /* story frames */
   .story { text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   html:not(.hs-on) .story { min-height:88vh; padding:4rem 0; }
@@ -652,6 +725,69 @@ const SITE = {
     }
   ],
 
+  /* Hall of Fame: your certificates, one full frame just before Contact (header tab = tab).
+     Wide screens: a 3D hologram hall; scrolling flies the camera from one certificate to the next (each one stands on
+     a projector pedestal, hover = the real scan, click = open it big). Phones: a list of hologram cards.
+     items: one per certificate, in the order you walk past them:
+       image  = a real scan/photo in images/ (landscape or portrait both fine)
+       title  = name on the certificate, issuer = who gave it, year = optional, note = optional, your own words
+       award: true = a prize (gets a ★ AWARD badge)
+       event  = optional: certificates with the same event text stand together as a pair (one stop, one card)
+     Empty list [] -> the frame is hidden (then also remove its "dive" from FRAMES.transitions). */
+  certs: {
+    tab: "Hall of Fame",
+    eyebrow: "certificates",
+    title: "Hall of Fame", highlight: "Fame",
+    subtitle: "เกียรติบัตรที่ผมได้รับ",
+    hint: "<b>//</b> เลื่อนเพื่อเดินชมทีละใบ · คลิกใบเพื่อขยาย",
+    hintEnd: "<b>//</b> เลื่อนต่อเพื่อไปต่อ ↓",
+    // awards first, then newest first. year = พ.ศ.  Same event = shown as a pair (keep them next to each other here)
+    items: [
+      { image: "images/cert-rmutt-drowzy-award.webp", award: true, year: "2569",
+        event: "การประกวดโครงงาน สิ่งประดิษฐ์ และนวัตกรรม ครั้งที่ 11",
+        title: "รองชนะเลิศอันดับ 2 ประเภทคอมพิวเตอร์และ AI · โครงงาน Drowzy Detector",
+        issuer: "คณะวิทยาศาสตร์และเทคโนโลยี มหาวิทยาลัยเทคโนโลยีราชมงคลธัญบุรี" },
+      { image: "images/cert-rmutt-innovation11.webp", year: "2569",
+        event: "การประกวดโครงงาน สิ่งประดิษฐ์ และนวัตกรรม ครั้งที่ 11",
+        title: "เกียรติบัตรผู้เข้าร่วม ประเภทคอมพิวเตอร์และ AI",
+        issuer: "คณะวิทยาศาสตร์และเทคโนโลยี มหาวิทยาลัยเทคโนโลยีราชมงคลธัญบุรี" },
+      { image: "images/cert-sillapa72-robot.webp", award: true, year: "2568",
+        title: "เหรียญทอง รองชนะเลิศอันดับ 1 · การแข่งขันหุ่นยนต์ผสม ม.4–ม.6",
+        issuer: "งานศิลปหัตถกรรมนักเรียน ครั้งที่ 72 ระดับเขตพื้นที่ · สำนักงานเขตพื้นที่การศึกษามัธยมศึกษากรุงเทพมหานคร เขต 2" },
+      { image: "images/cert-dekdee-gold.webp", award: true, year: "2568",
+        title: "รางวัล “เด็กดี ศรีบึงพระยา” ระดับทอง (ม.4)",
+        issuer: "โรงเรียนนวมินทราชินูทิศ เบญจมราชาลัย · วันเด็กแห่งชาติ" },
+      { image: "images/cert-kmitl-llm-local.webp", year: "2569",
+        event: "K-Engineering World Tour and Competency Challenge 2026",
+        title: "Workshop: เริ่มต้นใช้งาน Open Source LLM แบบ Local",
+        issuer: "คณะวิศวกรรมศาสตร์ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง" },
+      { image: "images/cert-kmitl-ai-cyber.webp", year: "2569",
+        event: "K-Engineering World Tour and Competency Challenge 2026",
+        title: "Workshop: ปัญญาประดิษฐ์พื้นฐานร่วมกับข้อมูลด้านความมั่นคงปลอดภัยทางไซเบอร์",
+        issuer: "คณะวิศวกรรมศาสตร์ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง" },
+      { image: "images/cert-hamsterhub-gamejamx.webp", year: "2569",
+        title: "HamsterHub GameJamX", issuer: "Hamster Hub" },
+      { image: "images/cert-hamsterhub-dek70-ss2.webp", year: "2569",
+        title: "Dek70 Camp SS2", issuer: "Hamster Hub" },
+      { image: "images/cert-kmutt-openhouse.webp", year: "2568",
+        event: "KMUTT Engineering Open House 2025",
+        title: "เข้าร่วมกิจกรรม Open House",
+        issuer: "คณะวิศวกรรมศาสตร์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี" },
+      { image: "images/cert-kmutt-cpe-workshop.webp", year: "2568",
+        event: "KMUTT Engineering Open House 2025",
+        title: "Workshop จากภาควิชาวิศวกรรมคอมพิวเตอร์",
+        issuer: "คณะวิศวกรรมศาสตร์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี" },
+      { image: "images/cert-samsung-sft2025.webp", year: "2568",
+        title: "Samsung Solve for Tomorrow 2025 · Design Thinking and Entrepreneurship Workshops",
+        issuer: "Thai Samsung Electronics · สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน" },
+      { image: "images/cert-futureskill-python.webp", year: "2568",
+        title: "UpSkill Python Programming เส้นทางสู่ Developer", issuer: "FutureSkill (คอร์สออนไลน์)" },
+      { image: "images/cert-kmitl-tinyml.webp", year: "2567",
+        title: "Introduction to AI and Getting Start on tinyML · Arduino Edge AI Club",
+        issuer: "ภาควิชาวิศวกรรมหุ่นยนต์และปัญญาประดิษฐ์ สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง ร่วมกับ iMAKE Innovation" }
+    ]
+  },
+
   /* Numbered sections after the story. false = hidden (the content further down is kept, set true to bring it back). */
   sections: { about: false, skills: false, projects: false, achievements: false, contact: true },
 
@@ -911,6 +1047,7 @@ const FRAMES = {
                 "glitch",   // -> Dek70 ss2 (the spark)
                 "dive",     // -> SendThemCool
                 "fly",      // -> Against All Odds (keep flying)
+                "dive",     // -> Hall of Fame (into the hologram hall)
                 "warp",     // -> Contact
                 "dive",     // -> DrowzyDetector
                 "fly"],     // -> หุ่นยนต์ผสม
@@ -1190,6 +1327,56 @@ function contactHTML(n) {
   </section>`;
 }
 
+// certificates from the same event (same "event") stand together: one stop in the hall, one card on phones.
+// Numbers (CERT 01..) follow the order on screen.
+function certGroups() {
+  const out = [], by = {};
+  ((SITE.certs || {}).items || []).forEach((it) => {
+    const g = it.event && by[it.event];
+    if (g) g.items.push({ ...it }); else { const ng = { event: it.event || "", items: [{ ...it }] }; out.push(ng); if (it.event) by[it.event] = ng; }
+  });
+  let no = 0; out.forEach((g) => g.items.forEach((it) => (it.no = ++no)));
+  return out;
+}
+// "CERT 01 / 13 · 2569 ★ AWARD", a pair = "CERT 01–02 / 13 ..."
+function certNo(g, total) {
+  const two = (i) => String(i).padStart(2, "0"), a = g.items[0], z = g.items[g.items.length - 1];
+  return `CERT ${two(a.no)}${z !== a ? "–" + two(z.no) : ""}${total ? " / " + two(total) : ""}${has(a.year) ? " · " + esc(a.year) : ""}` +
+    (g.items.some((x) => x.award) ? ` <b class="hall-award">★ AWARD</b>` : "");
+}
+
+// Hall of Fame (SITE.certs): heading + HUD (frames mode, filled by hallOfFame()) + hologram cards. The cards are the
+// phone layout and also the pictures the viewer opens from the 3D hall, so their images load eagerly.
+function hallHTML() {
+  const c = SITE.certs || {}, groups = certGroups();
+  if (!groups.length) return "";
+  const card = (g) => { const pair = g.items.length > 1, it = g.items[0];
+    return `
+      <figure class="hall-card${pair ? " is-pair" : ""}">
+        <div class="hall-pics">${g.items.map((x) => `<div class="st-pic hall-pic">${imgSlot(x.image, x.title, "", x.image, true)}</div>`).join("")}</div>
+        <figcaption>
+          <span class="hall-no">${certNo(g)}</span>
+          <span class="hall-name">${esc(g.event || it.title)}</span>
+          ${pair ? `<ul class="hall-list">${g.items.map((x) => `<li>${x.award ? "★ " : ""}${esc(x.title)}</li>`).join("")}</ul>` : ""}
+          ${has(it.issuer) ? `<span class="hall-issuer">${esc(it.issuer)}</span>` : ""}
+          ${g.items.filter((x) => has(x.note)).map((x) => `<span class="hall-note">${esc(x.note)}</span>`).join("")}
+        </figcaption>
+      </figure>`; };
+  return `
+  <section class="hall" id="certs">
+    ${GRID_BG}
+    <div class="hall-wrap">
+      <div class="hall-head">
+        <span class="hall-eyebrow">// ${esc(c.eyebrow)}</span>
+        <h2 class="hall-title">${rich(c.title, c.highlight)}</h2>
+        ${has(c.subtitle) ? `<p class="hall-sub">${esc(c.subtitle)}</p>` : ""}
+      </div>
+      <div class="hall-hud" aria-hidden="true"><span class="hh-no"></span><span class="hh-name"></span><ul class="hh-list"></ul><span class="hh-issuer"></span><span class="hh-note"></span></div>
+      <div class="st-gallery hall-grid">${groups.map(card).join("")}</div>
+    </div>
+  </section>`;
+}
+
 function render() {
   document.title = SITE.htmlTitle;
 
@@ -1205,12 +1392,13 @@ function render() {
   document.getElementById("hero-slot").innerHTML = heroHTML();
   if (has(SITE.heroPhoto)) document.querySelector("#hero-wrap .fade").insertAdjacentHTML("afterend",
     `<img class="hero-photo" src="${esc(SITE.heroPhoto)}" alt="${esc(SITE.about.photoAlt)}" onerror="this.remove()">`);
-  document.getElementById("app").innerHTML = storyHTML() + sections.map((s, i) => s.build(i + 1)).join("") + storyHTML(SITE.storyAfter, "after");
+  document.getElementById("app").innerHTML = storyHTML() + hallHTML() + sections.map((s, i) => s.build(i + 1)).join("") + storyHTML(SITE.storyAfter, "after");
 
   document.getElementById("brand").innerHTML = `<span>${esc(SITE.brand)}</span><span class="custom-cursor ml-0.5"></span>`;
   // header tabs: one per project frame in the story (each jumps straight to that project)
   const projTabs = (list, prefix) => (list || []).map((s, i) => (s.kind === "project" ? { id: `${prefix}-${i + 1}`, label: s.title } : null)).filter(Boolean);
-  const tabs = [...projTabs(SITE.story, "story"), ...projTabs(SITE.storyAfter, "after")];
+  const hallTab = has((SITE.certs || {}).items) ? [{ id: "certs", label: SITE.certs.tab }] : [];
+  const tabs = [...projTabs(SITE.story, "story"), ...hallTab, ...projTabs(SITE.storyAfter, "after")];
   document.getElementById("nav").innerHTML = tabs.map((s) => `<a class="${navLink} nav-link" data-target="${s.id}" href="#${s.id}">${esc(s.label)}</a>`).join("");
   document.getElementById("mobile-nav").innerHTML = tabs.map((s) => `<a class="${navLink} nav-link py-2" data-target="${s.id}" href="#${s.id}">${esc(s.label)}</a>`).join("");
 
@@ -2315,6 +2503,7 @@ document.addEventListener("click", (e) => {
 });
 
 let TUN = null;   // the projects tunnel, set once it's ready (see projectTunnel())
+let HALL = null;  // the Hall of Fame, set once it's ready (see hallOfFame())
 
 /* ---------- frames: vertical scroll plays a transition between stacked frames ---------- */
 const HS = (() => {
@@ -2577,6 +2766,7 @@ const HS = (() => {
       arrIdx = -1;
     }
     if (TUN) TUN.sync(a, e, panels);   // the tunnel follows the frames (shown behind project frames)
+    if (HALL) HALL.sync(a, e, panels);   // so does the Hall of Fame camera
     if (a < n - 1 && e > 0) fxFor(a)(panels[a], panels[a + 1], e);
   }
 
@@ -2587,7 +2777,7 @@ const HS = (() => {
     app.before(root); stage = root.firstChild;
     const items = [heroWrap, ...app.querySelectorAll(":scope > section")];
     panels = items.map((el, i) => {
-      const p = document.createElement("div"); p.className = "hs-panel" + (el === heroWrap ? " hs-hero" : "") + (el.classList.contains("is-project") ? " hs-proj" : "");
+      const p = document.createElement("div"); p.className = "hs-panel" + (el === heroWrap ? " hs-hero" : "") + (el.classList.contains("is-project") ? " hs-proj" : "") + (el.id === "certs" ? " hs-hall" : "");
       p.style.zIndex = p._z = i;
       const inn = document.createElement("div"); inn.className = "hs-inner"; inn.appendChild(el);
       const d = document.createElement("div"); d.className = "hs-dim";
@@ -2605,6 +2795,7 @@ const HS = (() => {
     ov.warp = document.createElement("canvas"); ov.warp.className = "hs-warp"; ov.warp.style.zIndex = panels.length + 1; stage.appendChild(ov.warp);
     restAt = -1;
     if (TUN) TUN.attach(stage);
+    if (HALL) HALL.attach(stage);
     st.ids = items.map((el) => (el === heroWrap ? null : el.id));
     st.on = true;
     document.documentElement.classList.add("hs-on");
@@ -2661,6 +2852,8 @@ const HS = (() => {
   }
   // (paused while the picture viewer is open, so arrows/wheel don't change frames behind it)
   const stepOn = () => st.on && FRAMES.stepMode && !document.documentElement.classList.contains("lb-open");
+  // the 3D scene that takes the wheel while its frame is at rest (projects tunnel or Hall of Fame), if any
+  const flier = () => (TUN && TUN.active() ? TUN : HALL && HALL.active() ? HALL : null);
   const cur = () => Math.max(0, Math.min(panels.length - 1, Math.round((scrollY - root.offsetTop) / step)));
   const base = () => (busy ? tw.to : cur());   // where the next step counts from
   const atEnd = (dir) => dir > 0 && base() >= panels.length - 1;
@@ -2675,10 +2868,11 @@ const HS = (() => {
   addEventListener("wheel", (ev) => {
     if (!stepOn() || ev.ctrlKey) return;
     const dir = Math.sign(ev.deltaY); if (!dir) return;
-    // resting on a project frame: the wheel flies through the tunnel; at either end only a NEW gesture leaves the frame
-    if (TUN && !busy && TUN.active() && inZone()) {
+    // resting on a project frame (or the Hall of Fame): the wheel flies the camera; at either end only a NEW gesture leaves the frame
+    const F = flier();
+    if (F && !busy && inZone()) {
       const t = performance.now();
-      if (!TUN.edge(dir)) { ev.preventDefault(); lastWheel = t; armed = false; TUN.push(ev.deltaY); return; }
+      if (!F.edge(dir)) { ev.preventDefault(); lastWheel = t; armed = false; F.push(ev.deltaY); return; }
       if (t - lastWheel < 220) { ev.preventDefault(); lastWheel = t; return; }   // momentum of the flight: stay
       armed = true;
     }
@@ -2705,7 +2899,8 @@ const HS = (() => {
     if (k === "Home") { ev.preventDefault(); animateTo(0); return; }
     const dir = (k === "ArrowDown" || k === "PageDown" || (k === " " && !ev.shiftKey)) ? 1
               : (k === "ArrowUp" || k === "PageUp" || (k === " " && ev.shiftKey)) ? -1 : 0;
-    if (dir && TUN && !busy && TUN.active() && inZone() && !TUN.edge(dir)) { ev.preventDefault(); TUN.push(dir * 300); return; }
+    const F = flier();
+    if (dir && F && !busy && inZone() && !F.edge(dir)) { ev.preventDefault(); F.push(dir * 300); return; }
     if (!dir || !inZone() || atEnd(dir)) return;
     ev.preventDefault(); go(dir);
   });
@@ -2721,7 +2916,8 @@ const HS = (() => {
   addEventListener("touchend", (ev) => {
     if (ty === null) return;
     const dy = ty - ev.changedTouches[0].clientY, dir = Math.sign(dy); ty = null;
-    if (Math.abs(dy) > 40 && TUN && !busy && TUN.active() && inZone() && !TUN.edge(dir)) { TUN.push(dy * 2); return; }
+    const F = flier();
+    if (Math.abs(dy) > 40 && F && !busy && inZone() && !F.edge(dir)) { F.push(dy * 2); return; }
     if (Math.abs(dy) > 40 && inZone() && !atEnd(dir)) go(dir);
   });
 
@@ -3022,6 +3218,279 @@ projectTunnel(TUNNEL).then((api) => {
   if (HS.on) HS.refresh();
 }).catch((e) => console.error("[tunnel]", e));
 
+/* ---------- Hall of Fame (SITE.certs): a 3D hologram hall inside its frame ----------
+   Frames mode only (wide screens). A straight hall with a glowing floor grid and hologram arches; every certificate
+   is a hologram screen standing on a projector pedestal, left and right in turn, turned toward the walkway.
+   The camera rides a smooth path through stops: -1 outside, 0 the door, 1..n in front of each certificate,
+   n+1 out the far end. While the frame is at rest one scroll gesture = fly to the next stop; at the door / the last
+   certificate a new gesture leaves the frame (same rules as the projects tunnel). The canvas lives inside the frame,
+   so frame transitions (dive in, warp out) move it with the frame. */
+async function hallOfFame() {
+  const c = SITE.certs || {}, items = c.items || [], sec = document.getElementById("certs");
+  if (!sec || !items.length || !FRAMES.enabled || innerWidth < FRAMES.minWidth || matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+  const THREE = await import(TUNNEL.three);
+  await new Promise((ok) => (document.readyState === "complete" ? ok() : addEventListener("load", ok, { once: true })));
+  if (document.fonts) await document.fonts.load('700 40px "JetBrains Mono"').catch(() => {});
+
+  THREE.ColorManagement.enabled = false;
+  const canvas = document.createElement("canvas"); canvas.id = "hall-gl"; canvas.setAttribute("aria-hidden", "true");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); } catch (e) { return null; }
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setPixelRatio(Math.min(TUNNEL.dpr || 1, devicePixelRatio || 1));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+  const smooth = (a, b, v) => { const k = clamp((v - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const two = (i) => String(i).padStart(2, "0");
+  const BG = new THREE.Color("#05060c"), CY = new THREE.Color("#00f0ff"), BL = new THREE.Color("#0066ff");
+  const scene = new THREE.Scene(); scene.background = BG; scene.fog = new THREE.Fog(BG, 12, 62);
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 220);
+  const add = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
+  const groups = certGroups(), n = groups.length, SP = 8, SIDE = 3.1, TURN = 0.55, EYE = 1.95, LEN = (n + 2) * SP;   // n = stops
+
+  // floor: fine grid + major lines, two side rails and a walkway with light pulses running into the hall
+  const floorMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uBg: { value: BG }, uC1: { value: CY }, uC2: { value: BL } },
+    vertexShader: `varying vec3 vW; varying float vD; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mv = viewMatrix * w; vD = -mv.z; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform float uTime; uniform vec3 uBg, uC1, uC2; varying vec3 vW; varying float vD;
+      float gl(float x, float w) { float d = fwidth(x) * w; float f = abs(fract(x - 0.5) - 0.5); return 1.0 - smoothstep(0.0, d, f); }
+      void main() {
+        float inner = 1.0 - smoothstep(4.0, 9.0, abs(vW.x));
+        float g = (gl(vW.x, 1.2) + gl(vW.z, 1.2)) * 0.07 + (gl(vW.x / 4.0, 1.6) + gl(vW.z / 4.0, 1.6)) * 0.2;
+        float lane = exp(-pow(vW.x * 1.5, 2.0));
+        float pulse = pow(fract(-vW.z * 0.07 - uTime * 0.3), 14.0) * lane;
+        float rail = exp(-pow((abs(vW.x) - 5.6) * 9.0, 2.0));
+        vec3 col = uC1 * g * inner + uC2 * lane * 0.12 + uC1 * pulse * 0.9 + uC1 * rail * 0.55;
+        gl_FragColor = vec4(uBg + col * (1.0 - smoothstep(8.0, 58.0, vD)), 1.0);
+      }`
+  });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(44, LEN + 60), floorMat);
+  floor.rotation.x = -Math.PI / 2; floor.position.z = -LEN / 2 + 10; scene.add(floor);
+
+  // hologram arches along the hall (one at the door, one between every two certificates)
+  const arches = [];
+  for (let k = 0; k <= n + 1; k++) {
+    const z = k === 0 ? 2 : -(k - 0.5) * SP, g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.TorusGeometry(5.6, 0.03, 8, 96, Math.PI), new THREE.MeshBasicMaterial({ ...add, color: CY, opacity: 0.55 })));
+    const dash = new THREE.Mesh(new THREE.RingGeometry(5.2, 5.28, 96, 1, 0, Math.PI), new THREE.MeshBasicMaterial({ ...add, color: BL, opacity: 0.7, side: THREE.DoubleSide }));
+    g.add(dash); g.position.z = z; scene.add(g); arches.push({ g, dash, z });
+  }
+  // label over the door
+  const textTex = (text, w, h, px, color) => { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const x = cv.getContext("2d");
+    x.font = `700 ${px}px "JetBrains Mono","Noto Sans Thai",monospace`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.shadowColor = "#00f0ff"; x.shadowBlur = 16; x.fillStyle = color; x.fillText(text, w / 2, h / 2 + 2); return new THREE.CanvasTexture(cv); };
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.5), new THREE.MeshBasicMaterial({ ...add, map: textTex(`// ${two(items.length)} CERTIFICATES`, 1024, 86, 44, "#bff6ff") }));
+  door.position.set(0, 5.0, 2); scene.add(door);
+
+  // floating dust
+  { const N = 1400, pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) pos.set([(Math.random() - 0.5) * 16, Math.random() * 7, 8 - Math.random() * (LEN + 16)], i * 3);
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ ...add, color: 0x7ff6ff, size: 0.04, opacity: 0.7 }))); }
+
+  /* certificate screens: hologram look (cyan tint, scanlines, light band, flicker, glowing edge + corner brackets).
+     uHolo 0.85 far away, ~0.35 for the one in front of you (readable), ~0.05 on hover (the real scan) */
+  const holoMat = (map) => new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    uniforms: { map: { value: map }, uTime: { value: 0 }, uHolo: { value: 0.85 }, uOpacity: { value: 1 }, uAspect: { value: 1.414 }, uSeed: { value: Math.random() } },
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform sampler2D map; uniform float uTime, uHolo, uOpacity, uAspect, uSeed; varying vec2 vUv;
+      void main() {
+        float sh = 0.001 + 0.004 * uHolo;
+        vec3 col = vec3(texture2D(map, vUv + vec2(sh, 0.0)).r, texture2D(map, vUv).g, texture2D(map, vUv - vec2(sh, 0.0)).b);
+        float lum = dot(col, vec3(0.299, 0.587, 0.114));
+        vec3 holo = mix(vec3(0.0, 0.3, 0.72), vec3(0.8, 1.0, 1.0), smoothstep(0.05, 0.95, lum)) * (0.45 + 0.85 * lum);
+        vec3 c = mix(col, holo, uHolo);
+        float scan = 0.85 + 0.15 * sin(vUv.y * 520.0 + uTime * 6.0);
+        float band = exp(-pow((fract(vUv.y - uTime * 0.2 + uSeed) - 0.5) * 20.0, 2.0));
+        float flick = 0.95 + 0.05 * sin(uTime * 29.0 + uSeed * 40.0) * sin(uTime * 7.0 + uSeed);
+        vec2 e = min(vUv, 1.0 - vUv) * vec2(uAspect, 1.0);
+        float edge = 1.0 - smoothstep(0.0, 0.01, min(e.x, e.y));
+        float corner = step(min(e.x, e.y), 0.025) * step(max(e.x, e.y), 0.14);
+        c = c * mix(1.0, scan * flick, uHolo) + vec3(0.0, 0.94, 1.0) * (band * 0.3 * uHolo + edge * 0.6 + corner * 0.9);
+        float a = mix(0.97, 0.35 + 0.65 * smoothstep(0.02, 0.5, lum), uHolo);
+        a = max(a, max(edge * 0.8, corner));
+        gl_FragColor = vec4(c, a * uOpacity);
+      }`
+  });
+  const placeholder = (text) => { const cv = document.createElement("canvas"); cv.width = 707; cv.height = 500; const x = cv.getContext("2d");
+    x.fillStyle = "#061520"; x.fillRect(0, 0, 707, 500); x.strokeStyle = "rgba(0,240,255,.5)"; x.setLineDash([10, 8]); x.lineWidth = 3; x.strokeRect(6, 6, 695, 488);
+    x.font = '500 24px "JetBrains Mono",monospace'; x.fillStyle = "#94A3B8"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, 353, 250); return new THREE.CanvasTexture(cv); };
+  const glowTex = (() => { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const x = cv.getContext("2d");
+    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, "rgba(0,240,255,.9)"); g.addColorStop(0.35, "rgba(0,150,255,.35)"); g.addColorStop(1, "rgba(0,102,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })();
+  const beamMat = () => new THREE.ShaderMaterial({ ...add, side: THREE.DoubleSide, uniforms: { uTime: { value: 0 }, uC: { value: CY }, uOp: { value: 1 } },
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uTime, uOp; uniform vec3 uC; varying vec2 vUv;
+      void main() { float a = pow(1.0 - vUv.y, 1.3) * 0.5 * uOp * (0.7 + 0.3 * sin(vUv.x * 75.0 + uTime * 2.5)); gl_FragColor = vec4(uC * a, a); }` });
+
+  const loader = new THREE.TextureLoader(), maxAniso = renderer.capabilities.getMaxAnisotropy();
+  // one stop per group (certificates from the same event stand side by side, each on its own pedestal)
+  const certs = [], stops = groups.map((grp, si) => {
+    const m = grp.items.length, side = si % 2 ? 1 : -1, z = -(si + 1) * SP, ry = -side * TURN;
+    const G = new THREE.Group(); G.position.set(side * (SIDE + (m - 1) * 1.3), 0, z); G.rotation.y = ry; scene.add(G);
+    grp.items.forEach((it, k) => {
+      const g = new THREE.Group(); g.position.x = (k - (m - 1) / 2) * 3.6; G.add(g);
+      // pedestal: dark disc, glowing rim, a turning arc, glow on the floor and the projector beam
+      g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.08, 0.14, 48), new THREE.MeshBasicMaterial({ color: 0x061b25 })));
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.02, 6, 64), new THREE.MeshBasicMaterial({ ...add, color: CY, opacity: 0.9 }));
+      rim.rotation.x = Math.PI / 2; rim.position.y = 0.14; g.add(rim);
+      const arc = new THREE.Mesh(new THREE.RingGeometry(0.58, 0.66, 48, 1, 0, Math.PI * 1.4), new THREE.MeshBasicMaterial({ ...add, color: BL, opacity: 0.9, side: THREE.DoubleSide }));
+      arc.rotation.x = -Math.PI / 2; arc.position.y = 0.15; g.add(arc);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 4.6), new THREE.MeshBasicMaterial({ ...add, map: glowTex, opacity: 0.5 }));
+      pool.rotation.x = -Math.PI / 2; pool.position.y = 0.01; g.add(pool);
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 0.62, 0.8, 40, 1, true), beamMat());
+      beam.position.y = 0.55; g.add(beam);
+      // the screen + its label
+      const mat = holoMat(placeholder(`add ${it.image || "image"}`));
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); g.add(scr);
+      const tag = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.2), new THREE.MeshBasicMaterial({ ...add,
+        map: textTex(`▸ CERT ${two(it.no)}${has(it.year) ? " · " + it.year : ""}${it.award ? " · ★ AWARD" : ""}`, 768, 64, 30, it.award ? "#e0fdff" : "#7ff6ff") }));
+      g.add(tag);
+      const C = { stop: si + 1, g, scr, mat, tag, beam, arc, rim, hover: 0, holo: 0.85, w: 3, h: 2.12, ph: certs.length };
+      const fit = (aspect) => { let w = 3.1, h = w / aspect; if (h > 2.5) { h = 2.5; w = h * aspect; }
+        C.w = w; C.h = h; scr.scale.set(w, h, 1); scr.position.y = 0.98 + h / 2; mat.uniforms.uAspect.value = w / h;
+        tag.position.set(-w / 2 + 1.2, 0.98 + h + 0.18, 0); };
+      fit(1.414);
+      if (has(it.image)) loader.load(it.image, (tex) => { tex.anisotropy = maxAniso; mat.uniforms.map.value.dispose(); mat.uniforms.map.value = tex; fit(tex.image.width / tex.image.height); }, undefined, () => {});
+      certs.push(C);
+    });
+    // where the camera stands: in front of the group at eye height, farther back for a pair
+    const nrm = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry));
+    const look = new THREE.Vector3(G.position.x, EYE - 0.2, z);   // a little low, so the pedestals are in view too
+    const eye = look.clone().addScaledVector(nrm, m > 1 ? 7.8 : 5.6); eye.y = EYE + (m > 1 ? 0.35 : 0.1);
+    return { look, eye };
+  });
+  // camera path through the stops: -1 outside, 0 the door, 1..n the certificates, n+1 out the far end
+  const eyes = [new THREE.Vector3(0, 3, 24), new THREE.Vector3(0, 2.2, 12), ...stops.map((S) => S.eye), new THREE.Vector3(0, 1.9, -(n + 1) * SP - 2)];
+  const looks = [new THREE.Vector3(0, 2.2, -6), new THREE.Vector3(0, 2.3, -14), ...stops.map((S) => S.look), new THREE.Vector3(0, 1.9, -(n + 1) * SP - 22)];
+  const eyeCurve = new THREE.CatmullRomCurve3(eyes, false, "centripetal"), lookCurve = new THREE.CatmullRomCurve3(looks, false, "centripetal");
+  const at = (curve, s) => curve.getPoint(clamp((s + 1) / (n + 2), 0, 1));
+
+  /* state: s = camera position in stops, idx = the stop it's heading for */
+  let s = -1, sPrev = s, idx = 0, active = false, shown = false, restIdx = -1, tr = null, pushed = false;
+  let W = 0, H = 0, mx = 0, my = 0, lmx = 0, lmy = 0, hot = null, panel = null;
+  const hud = sec.querySelector(".hall-hud"), hNo = hud.querySelector(".hh-no"), hName = hud.querySelector(".hh-name"),
+        hIss = hud.querySelector(".hh-issuer"), hNote = hud.querySelector(".hh-note"), hList = hud.querySelector(".hh-list");
+  const hint = document.createElement("div"); hint.className = "tun-hint"; hint.setAttribute("aria-hidden", "true");
+  const size = () => { W = canvas.clientWidth; H = canvas.clientHeight; if (!W || !H) return; renderer.setSize(W, H, false); camera.aspect = W / H; };
+  addEventListener("resize", size);
+  // one gesture = one stop (a trackpad flick sends a long tail of wheel events; only a new push counts)
+  let armed = true, lastT = 0, lastAbs = 0, firedAt = 0, acc = 0;
+  const api = {
+    // canvas goes right after the frame's content (HS expects content first and the dim layer last); hint on the stage
+    attach(stage) { panel = stage.querySelector(".hs-hall"); if (!panel) return; panel.firstChild.after(canvas); stage.append(hint); size(); },
+    active: () => active && HS.on,
+    edge: (dir) => (dir > 0 ? idx >= n && Math.abs(s - n) < 0.06 : idx <= 0 && Math.abs(s) < 0.06),
+    push(dy) {
+      const now = performance.now(), gap = now - lastT, abs = Math.abs(dy), prev = lastAbs;
+      lastT = now; lastAbs = abs;
+      if (!armed && (gap > 200 || (abs > prev * 1.4 + 4 && now - firedAt > 250))) armed = true;
+      if (!armed) return;
+      acc = gap > 250 ? dy : acc + dy;
+      if (Math.abs(acc) < (FRAMES.stepThreshold || 20)) return;
+      idx = clamp(idx + Math.sign(acc), 0, n); acc = 0; armed = false; firedAt = now; pushed = true;
+    },
+    // frames a (and a+1 while e > 0) are showing; e = transition progress
+    sync(a, e, panels) {
+      const isH = (p) => !!p && p.classList.contains("hs-hall");
+      const A = isH(panels[a]), B = e > 0 && isH(panels[a + 1]);
+      shown = A || B;
+      if (e === 0) {
+        tr = null;
+        if (A && !active) {   // arrived: from before = glide to the door, from after = stand at the last certificate
+          if (restIdx > a) { s = sPrev = n + 0.6; idx = n; } else { if (s > 0) s = sPrev = -0.6; idx = 0; }
+          pushed = false;
+        }
+        active = A; restIdx = a; return;
+      }
+      active = false;
+      if (!tr || tr.a !== a) tr = { a, fwd: restIdx <= a, s0: s };
+      if (B) s = tr.fwd ? lerp(-1.4, -0.6, e) : lerp(-1.4, tr.s0, e);   // diving in / backing out
+      else if (A) s = tr.fwd ? lerp(tr.s0, n + 1, e) : lerp(n, n + 1, e); // walking out the far end / coming back
+    }
+  };
+
+  // pointer: look around a little, hover a screen, click = open the real scan in the picture viewer
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), screens = certs.map((C) => C.scr);
+  addEventListener("pointermove", (e) => { if (!shown) return; const r = canvas.getBoundingClientRect(); if (!r.width) return;
+    mx = (e.clientX - r.left) / r.width * 2 - 1; my = (e.clientY - r.top) / r.height * 2 - 1; }, { passive: true });
+  document.addEventListener("click", (e) => {
+    if (!api.active() || !hot || LB.isOpen() || e.target.closest("a, button, header, .lb")) return;
+    const img = sec.querySelectorAll(".hall-grid .st-pic img")[screens.indexOf(hot)];
+    if (img && img.naturalWidth) LB.open(img);
+  });
+
+  let hudK = -1;
+  const setHud = (k) => {   // k = stop in front of you (1..n), or 0 = none
+    if (k === hudK) return; hudK = k;
+    if (!k) { hud.classList.remove("on", "swap"); return; }
+    const grp = groups[k - 1], it = grp.items[0];
+    hNo.innerHTML = certNo(grp, items.length);
+    hName.textContent = grp.event || it.title || "";
+    hList.innerHTML = grp.items.length > 1 ? grp.items.map((x) => `<li>${x.award ? "★ " : ""}${esc(x.title)}</li>`).join("") : "";
+    hIss.textContent = it.issuer || ""; hNote.textContent = grp.items.map((x) => x.note).filter(has).join(" · ");
+    hud.classList.remove("swap"); void hud.offsetWidth; hud.classList.add("on", "swap");
+  };
+
+  const look = new THREE.Vector3(), right = new THREE.Vector3();
+  let last = performance.now(), time = 0, shift = 0.12;
+  const loop = (now) => {
+    requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    canvas.style.display = shown ? "block" : "none";
+    if (!shown || !canvas.isConnected) return;
+    if (!W) size();
+    time += dt;
+    if (active) s += (idx - s) * Math.min(1, dt * 2.4);
+    const v = (s - sPrev) / Math.max(dt, 1e-3); sPrev = s;
+    const spd = clamp(Math.abs(v) / 1.6, 0, 1);
+    // camera on the path; the pointer turns the head a little
+    lmx += (mx - lmx) * 0.06; lmy += (my - lmy) * 0.06;
+    camera.position.copy(at(eyeCurve, s)); look.copy(at(lookCurve, s));
+    right.subVectors(look, camera.position).cross(camera.up).normalize();
+    camera.position.addScaledVector(right, lmx * 0.25).y -= lmy * 0.15;
+    look.addScaledVector(right, lmx * 0.9).y -= lmy * 0.5;
+    camera.lookAt(look);
+    camera.fov = 50 + spd * 16;
+    // inside the hall the view shifts so the certificate sits right of the HUD (a pair is wider: shift more)
+    const off = smooth(0.4, 1, s) * (1 - smooth(n, n + 0.8, s)), g0 = groups[clamp(Math.round(s), 1, n) - 1];
+    shift += ((g0 && g0.items.length > 1 ? 0.18 : 0.12) - shift) * Math.min(1, dt * 3);
+    camera.setViewOffset(W, H, -W * shift * off, 0, W, H); camera.updateProjectionMatrix();
+    floorMat.uniforms.uTime.value = time;
+    arches.forEach((A, k) => { A.dash.rotation.z = Math.sin(time * 0.4 + k) * 0.25; });
+    // hover (only while the frame is at rest)
+    if (api.active() && !LB.isOpen()) { ndc.set(mx, -my); ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(screens, false)[0]; hot = h && h.distance < 14 ? h.object : null; }
+    else hot = null;
+    if (panel) panel.style.cursor = hot ? "zoom-in" : "";
+    const near = Math.round(s), focus = clamp(1 - Math.abs(s - near) / 0.35, 0, 1);
+    for (const C of certs) {
+      const me = near === C.stop ? focus : 0;
+      C.hover += ((hot === C.scr ? 1 : 0) - C.hover) * 0.15;
+      C.holo += ((hot === C.scr ? 0.05 : lerp(0.85, 0.35, me)) - C.holo) * 0.1;
+      const U = C.mat.uniforms; U.uHolo.value = C.holo; U.uTime.value = time + C.ph * 3.1;
+      C.scr.position.y = 0.98 + C.h / 2 + Math.sin(time * 1.1 + C.ph) * 0.05;
+      const z = 1 + C.hover * 0.04; C.scr.scale.set(C.w * z, C.h * z, 1);
+      C.beam.material.uniforms.uTime.value = time; C.beam.material.uniforms.uOp.value = 0.7 + 0.5 * me;
+      C.arc.rotation.z = time * (0.6 + 0.4 * me) + C.ph;
+    }
+    // heading moves to the corner inside the hall; HUD names the certificate in front of you
+    sec.classList.toggle("in-hall", s > 0.5 && s < n + 0.5);
+    setHud(api.active() && near >= 1 && near <= n && focus > 0.4 ? near : 0);
+    const msg = !api.active() ? "" : idx >= n && s > n - 0.3 ? c.hintEnd : !pushed ? c.hint : "";
+    if (msg && hint.innerHTML !== msg) hint.innerHTML = msg;
+    hint.classList.toggle("on", !!msg);
+    renderer.render(scene, camera);
+  };
+  requestAnimationFrame(loop);
+  return api;
+}
+hallOfFame().then((api) => {
+  if (!api) { document.documentElement.classList.add("hall-fail"); return; }   // no 3D hall: frames mode shows the cards in a row
+  HALL = api; document.documentElement.classList.add("hall-on");
+  const st = document.getElementById("hs-sticky"); if (st) api.attach(st);
+  if (HS.on) HS.refresh();
+}).catch((e) => { console.error("[hall]", e); document.documentElement.classList.add("hall-fail"); });
+
 /* ---------- scroll tracking: progress bar + active section in nav ---------- */
 (() => {
   const bar = document.getElementById("progress");
@@ -3073,7 +3542,7 @@ projectTunnel(TUNNEL).then((api) => {
   const io2 = new IntersectionObserver((es) => es.forEach((e) => {
     if (!HS.on && e.isIntersecting) { e.target.classList.add("st-play"); io2.unobserve(e.target); }
   }), { threshold: 0.35 });
-  document.querySelectorAll(".st-gallery").forEach((g) => io2.observe(g.closest(".story")));
+  document.querySelectorAll(".story .st-gallery").forEach((g) => io2.observe(g.closest(".story")));
 })();
 </script>
 </body>
