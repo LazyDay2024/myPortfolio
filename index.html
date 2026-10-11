@@ -651,8 +651,9 @@ const SITE = {
       kind: "project",
       title: "Budget-Bot", highlight: "Budget-Bot",
       icon: "images/budget-bot-icon.png",   // real icon; placeholder shows until the file exists
-      gallery: ["images/budget-bot-1.png", "images/budget-bot-2.png"],   // chat answer, n8n workflow
+      gallery: ["images/budget-bot-1.png", "images/budget-bot-2.png", "images/budget-bot-letter.webp"],   // chat answer, n8n workflow, letter of certification
       subtitle: "แชทบอทที่ทำหน้าที่ตอบคำถามเรื่องงบประมาณในหน่วยงานของพ่อผม",
+      award: { icon: "verified", title: "หนังสือรับรองผลงาน", event: "ศูนย์ประสานการปฏิบัติที่ 4 กอ.รมน. · 9 ก.ย. 2569" },
       points: ["ทำงานบนแพลตฟอร์ม n8n", "นำฐานข้อมูลมาจาก Google Sheet", "ใช้ API จาก Groq"],
       tags: ["n8n", "Google Sheet", "Groq API", "Chatbot"]
     },
@@ -1150,7 +1151,7 @@ function storyHTML(list = SITE.story, prefix = "story") {
         ${has(s.eyebrow) ? `<div class="st-eyebrow">${esc(s.eyebrow)}</div>` : ""}
         <h2 class="st-title">${rich(s.title, s.highlight)}</h2>
         ${has(s.subtitle) ? `<p class="st-sub">${rich(s.subtitle)}</p>` : ""}
-        ${s.award && has(s.award.title) ? `<div class="st-award"><span class="st-award-icon">${icon("emoji_events", 22)}</span>
+        ${s.award && has(s.award.title) ? `<div class="st-award"><span class="st-award-icon">${icon(s.award.icon || "emoji_events", 22)}</span>
           <span><b>${esc(s.award.title)}</b>${has(s.award.event) ? `<small>${esc(s.award.event)}</small>` : ""}</span></div>` : ""}
         ${has(s.text) ? `<div class="st-card neon-card"><p>${rich(s.text)}</p></div>` : ""}
         <div class="st-body">
