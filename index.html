@@ -217,6 +217,10 @@
       linear-gradient(#00f0ff,#00f0ff) 0 100% / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 0 100% / 2px 22px no-repeat,
       linear-gradient(#00f0ff,#00f0ff) 100% 100% / 22px 2px no-repeat, linear-gradient(#00f0ff,#00f0ff) 100% 100% / 2px 22px no-repeat;
     filter:drop-shadow(0 0 6px rgba(0,240,255,.8)); }
+  /* the gallery is hidden in the tunnel, so the text panel can be wider (fewer wrapped lines: long frames like
+     Against All Odds / DrowzyDetector must still fit 1280x720, or frames switch off everywhere) */
+  html.tun-on .hs-proj .st-split { grid-template-columns:minmax(0, 640px) 1fr; }
+  html.tun-on .hs-proj .st-sub { font-size:clamp(18px,1.8vw,22px); }
   html.tun-on .hs-proj .st-text-col :is(p, li, .st-sub) { text-shadow:0 0 14px rgba(0,200,255,.28); }
   @keyframes holoOn { 0% { opacity:.1; } 12% { opacity:.85; } 20% { opacity:.25; } 32% { opacity:1; } 40% { opacity:.55; } 52%, 100% { opacity:1; } }
   @keyframes holoBob { 50% { translate:0 -8px; } }
@@ -634,6 +638,20 @@ const SITE = {
     { kind: "text",  text: "เพราะใครสักคนดึงผมออกมาจากกองขี้เถ้านั้น\nผลักดันให้ผมทำอะไรสักอย่าง ดีกว่าที่จะอยู่นิ่ง ๆ", highlight: "ใครสักคน" },
     {
       kind: "project",
+      eyebrow: "การแข่งขันศิลปหัตถกรรม ครั้งที่ 72",
+      title: "หุ่นยนต์ผสม", highlight: "หุ่นยนต์ผสม",
+      subtitle: "รายการการแข่งขันหุ่นยนต์ผสม ระดับ ม.4–ม.6",
+      award: { title: "เหรียญทอง" },
+      gallery: ["images/robot-72-1.webp"],   // team photo at the competition
+      points: [
+        "หน้าที่ของผม: ประกอบหุ่นยนต์ และตั้งค่าองศาการเดินของหุ่น",
+        "ฝึกซ้อมเดินหุ่นยนต์ทุกวันตั้งแต่ตอนเย็นถึงหัวค่ำ เป็นเวลา 3 เดือนก่อนแข่ง"
+      ],
+      tags: ["Robotics", "Teamwork"],
+      comment: "นี่คือการลงสนามครั้งแรกของผม การซ้อมในแต่ละครั้งปลูกฝังให้ผมมีความกระตือรือร้นในการทำงานมาจนถึงปัจจุบัน"
+    },
+    {
+      kind: "project",
       eyebrow: "เริ่มจากโปรเจกต์",
       title: "LetMeLearn", highlight: "LetMeLearn",
       subtitle: "เว็บไซต์ช่วยติวเนื้อหาด้วยเทคโนโลยีปัญญาประดิษฐ์",
@@ -689,11 +707,7 @@ const SITE = {
       ],
       tags: ["Unity", "Horror", "Psychological Thriller"],
       comment: "นี่เป็นโปรเจกต์ที่ใหญ่ที่สุดเท่าที่ผมเคยทำมา ผมได้เรียนรู้จากโปรเจกต์นี้หลาย ๆ อย่างมาก"
-    }
-  ],
-
-  /* Frames shown AFTER Contact (same format as story). Temporary spot — move into `story` when the order is decided. */
-  storyAfter: [
+    },
     {
       kind: "project",
       title: "DrowzyDetector", highlight: "DrowzyDetector",
@@ -709,22 +723,11 @@ const SITE = {
       ],
       tags: ["Python", "Raspberry Pi", "AI"],
       comment: "นี่เป็นครั้งแรกที่ผมได้มีโอกาสใช้ Raspberry Pi และพัฒนาโมเดล AI ให้ทำงานบน Controller โดยผมศึกษาแนวคิดและวิธีทำจากโลกอินเทอร์เน็ตและปรึกษา AI จนสามารถสร้างผลงานได้สำเร็จตามเป้าที่ตั้งไว้"
-    },
-    {
-      kind: "project",
-      eyebrow: "การแข่งขันศิลปหัตถกรรม ครั้งที่ 72",
-      title: "หุ่นยนต์ผสม", highlight: "หุ่นยนต์ผสม",
-      subtitle: "รายการการแข่งขันหุ่นยนต์ผสม ระดับ ม.4–ม.6",
-      award: { title: "เหรียญทอง" },
-      gallery: ["images/robot-72-1.webp"],   // team photo at the competition
-      points: [
-        "หน้าที่ของผม: ประกอบหุ่นยนต์ และตั้งค่าองศาการเดินของหุ่น",
-        "ฝึกซ้อมเดินหุ่นยนต์ทุกวันตั้งแต่ตอนเย็นถึงหัวค่ำ เป็นเวลา 3 เดือนก่อนแข่ง"
-      ],
-      tags: ["Robotics", "Teamwork"],
-      comment: "นี่คือการลงสนามครั้งแรกของผม การซ้อมในแต่ละครั้งปลูกฝังให้ผมมีความกระตือรือร้นในการทำงานมาจนถึงปัจจุบัน"
     }
   ],
+
+  /* Frames shown AFTER Contact (same format as story). Empty now: everything is in `story`. */
+  storyAfter: [],
 
   /* Hall of Fame: your certificates, one full frame just before Contact (header tab = tab).
      Wide screens: a 3D hologram hall; scrolling flies the camera from one certificate to the next (each one stands on
@@ -1040,7 +1043,8 @@ const FRAMES = {
                 "crane",    // -> ผมหมดไฟ... (the camera sinks)
                 "lift",     // -> แล้วลุกยังไงล่ะ? (the camera rises)
                 "dolly",    // -> ใครสักคน
-                "dive",     // -> LetMeLearn (into the tunnel)
+                "dive",     // -> หุ่นยนต์ผสม (into the tunnel)
+                "fly",      // -> LetMeLearn (keep flying)
                 "warp",     // -> ฉ่ำเรื่อง API (out of the tunnel)
                 "dive",     // -> Budget-Bot
                 "swing",    // -> ไร้จุดหมาย (drifting)
@@ -1048,10 +1052,9 @@ const FRAMES = {
                 "glitch",   // -> Dek70 ss2 (the spark)
                 "dive",     // -> SendThemCool
                 "fly",      // -> Against All Odds (keep flying)
+                "fly",      // -> DrowzyDetector (keep flying)
                 "dive",     // -> Hall of Fame (into the hologram hall)
-                "warp",     // -> Contact
-                "dive",     // -> DrowzyDetector
-                "fly"],     // -> หุ่นยนต์ผสม
+                "warp"],    // -> Contact
   scrollPerFrame: 1.3, hold: 0.15, snap: true,
   stepMode: true, stepDuration: 900, stepThreshold: 20
 };
