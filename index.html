@@ -889,9 +889,9 @@ const SITE = {
   ],
 
   contact: {
-    headline: "Get in touch", highlight: "touch",
-    body: "Happy to answer questions about my projects or walk through the code.",
-    closing: "ล้มแล้วลุก แต่ไม่ใช่ตุ๊กตา", closingHighlight: "ล้มแล้วลุก",   // last line of the site
+    headline: "Contact", highlight: "Contact",
+    body: "",   // "" = no line under the headline
+    closing: "ล้มอย่างมีศักดิ์ศรี\nลุกด้วยความศรัทธาจากบทเรียน", closingHighlight: "ล้มอย่างมีศักดิ์ศรี\nลุกด้วยความศรัทธาจากบทเรียน",   // last line of the site
     photo: "images/contact.png",   // transparent PNG shown on the left; "" = none
     photoAlt: "Ryu"
   }
@@ -1317,9 +1317,8 @@ function contactHTML(n) {
     <div class="ct-layout">
       ${has(c.photo) ? `<div class="ct-photo" style="--ct-photo:url('${esc(c.photo)}')">${HOLO.enabled ? rings : ""}<img src="${esc(c.photo)}" alt="${esc(c.photoAlt)}" onerror="this.parentNode.remove()"></div>` : ""}
       <div class="min-w-0">
-        <span class="ct-eyebrow">${String(n).padStart(2, "0")} // contact</span>
         <h2 class="ct-title">${rich(c.headline, c.highlight)}</h2>
-        <p class="ct-body">${esc(c.body)}</p>
+        ${has(c.body) ? `<p class="ct-body">${esc(c.body)}</p>` : ""}
         <div class="ct-term">
           <div class="ct-term-top" aria-hidden="true"><i></i><i></i><i></i><span>~/contact</span></div>
           <p class="ct-cmd" aria-hidden="true"><span class="ct-prompt">ryu@portfolio:~$</span> <span class="ct-cmd-text">contact --list</span></p>
